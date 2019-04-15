@@ -1,0 +1,3 @@
+## System Diagram
+
+![](system.svg)
