@@ -1,0 +1,185 @@
+
+DEPTH=16;
+WIDTH=80;
+
+ADDRESS_RADIX=DEC;
+DATA_RADIX=HEX;
+
+CONTENT BEGIN 
+% For Types, please refer to the type section in document. %
+% 1 for on，0 for off. 16 points per row . 16*16 rows in total %
+%matrix for 0%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:3CH  00H  
+4:64H  00H  
+5:42H  00H  
+6:42H  00H  
+7:42H  00H  
+8:42H  00H  
+9:42H  00H  
+10:42H  00H  
+11:46H  00H  
+12:2CH  00H  
+13:18H  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 1%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:08H  00H  
+4:18H  00H  
+5:78H  00H  
+6:58H  00H  
+7:18H  00H  
+8:18H  00H  
+9:18H  00H  
+10:18H  00H  
+11:18H  00H  
+12:18H  00H  
+13:18H  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 2%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:3CH  00H  
+4:66H  00H  
+5:42H  00H  
+6:06H  00H  
+7:04H  00H  
+8:0CH  00H  
+9:08H  00H  
+10:10H  00H  
+11:20H  00H  
+12:7EH  00H  
+13:7EH  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 3%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:3CH  00H  
+4:66H  00H  
+5:42H  00H  
+6:06H  00H  
+7:0CH  00H  
+8:0CH  00H  
+9:06H  00H  
+10:02H  00H  
+11:42H  00H  
+12:64H  00H  
+13:18H  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 4%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:04H  00H  
+4:0CH  00H  
+5:1CH  00H  
+6:14H  00H  
+7:24H  00H  
+8:64H  00H  
+9:44H  00H  
+10:FFH  00H  
+11:04H  00H  
+12:04H  00H  
+13:04H  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 5%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:3EH  00H  
+4:60H  00H  
+5:40H  00H  
+6:50H  00H  
+7:7CH  00H  
+8:46H  00H  
+9:02H  00H  
+10:02H  00H  
+11:C6H  00H  
+12:6CH  00H  
+13:38H  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 6%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:08H  00H  
+4:18H  00H  
+5:10H  00H  
+6:30H  00H  
+7:7CH  00H  
+8:62H  00H  
+9:43H  00H  
+10:43H  00H  
+11:42H  00H  
+12:66H  00H  
+13:3CH  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 7%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:7EH  00H  
+4:02H  00H  
+5:06H  00H  
+6:04H  00H  
+7:0CH  00H  
+8:08H  00H  
+9:18H  00H  
+10:10H  00H  
+11:10H  00H  
+12:30H  00H  
+13:30H  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 8%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:3CH  00H  
+4:46H  00H  
+5:42H  00H  
+6:46H  00H  
+7:7CH  00H  
+8:7CH  00H  
+9:42H  00H  
+10:C2H  00H  
+11:42H  00H  
+12:66H  00H  
+13:3CH  00H  
+14:00H  00H  
+15:00H  00H  
+%matrix for 9%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:3CH  00H  
+4:46H  00H  
+5:C2H  00H  
+6:C2H  00H  
+7:C6H  00H  
+8:6CH  00H  
+9:3CH  00H  
+10:08H  00H  
+11:18H  00H  
+12:10H  00H  
+13:30H  00H  
+14:00H  00H  
+15:00H  00H
+ 
+
+
+
+END;
