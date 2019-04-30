@@ -1,0 +1,98 @@
+
+DEPTH=16;
+WIDTH=80;
+
+ADDRESS_RADIX=DEC;
+DATA_RADIX=HEX;
+
+CONTENT BEGIN 
+% For Types, please refer to the type section in document. %
+% 1 for on，0 for off. 16 points per row . 16*5 rows in total %
+%matrix for "S"%
+0:00H  00H  
+1:00H  00H  
+2:00H  00H  
+3:3CH  00H  
+4:66H  00H  
+5:46H  00H  
+6:60H  00H  
+7:30H  00H  
+8:1CH  00H  
+9:06H  00H  
+10:42H  00H  
+11:42H  00H  
+12:66H  00H  
+13:3CH  00H  
+14:00H  00H  
+15:00H  00H
+%matrix for "c"%
+16:00H  00H  
+17:00H  00H  
+18:00H  00H  
+19:00H  00H  
+20:00H  00H  
+21:00H  00H  
+22:00H  00H  
+23:3CH  00H  
+24:46H  00H  
+25:40H  00H  
+26:40H  00H  
+27:42H  00H  
+28:66H  00H  
+29:38H  00H  
+30:00H  00H  
+31:00H  00H
+%matrix for "o"%
+32:00H  00H  
+33:00H  00H  
+34:00H  00H  
+35:00H  00H  
+36:00H  00H  
+37:00H  00H  
+38:00H  00H  
+39:3CH  00H  
+40:46H  00H  
+41:42H  00H  
+42:42H  00H  
+43:42H  00H  
+44:66H  00H  
+45:18H  00H  
+46:00H  00H  
+47:00H  00H
+%matrix for "r"%
+48:00H  00H  
+49:00H  00H  
+50:00H  00H  
+51:00H  00H  
+52:00H  00H  
+53:00H  00H  
+54:00H  00H  
+55:2CH  00H  
+56:30H  00H  
+57:20H  00H  
+58:20H  00H  
+59:20H  00H  
+60:20H  00H  
+61:20H  00H  
+62:00H  00H  
+63:00H  00H
+ %matrix for "e"% 
+64:00H  00H  
+65:00H  00H  
+66:00H  00H  
+67:00H  00H  
+68:00H  00H  
+69:00H  00H  
+70:00H  00H  
+71:3CH  00H  
+72:46H  00H  
+73:7EH  00H  
+74:40H  00H  
+75:42H  00H  
+76:66H  00H  
+77:1CH  00H  
+78:00H  00H  
+79:00H  00H
+ 
+
+END;
