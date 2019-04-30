@@ -1,41 +1,43 @@
 /*
-A simple VGA 
+A simple VGA Controller
 */
 
 module vga_controller #(
   parameter integer width_p = 640
   ,parameter integer height_p = 480
 
-  ,parameter v_sync_pulse_p = 2
-  ,parameter v_sync_back_porch_p = 33
-  ,parameter v_sync_front_porch_p = 10
+  ,parameter integer v_sync_pulse_p = 2
+  ,parameter integer v_sync_back_porch_p = 33
+  ,parameter integer v_sync_front_porch_p = 10
 
-  ,parameter h_sync_pulse_p = 96
-  ,parameter h_sync_back_porch_p = 48
-  ,parameter h_sync_front_porch_p = 16
+  ,parameter integer h_sync_pulse_p = 96
+  ,parameter integer h_sync_back_porch_p = 48
+  ,parameter integer h_sync_front_porch_p = 16
+
+  ,parameter integer bit_depth = 8
 )(
   input clk_i // = 25MHz
   ,input reset_i
 
-  ,input [7:0] r_i
-  ,input [7:0] g_i
-  ,input [7:0] b_i
+  ,input [bit_depth-1:0] r_i
+  ,input [bit_depth-1:0] g_i
+  ,input [bit_depth-1:0] b_i
 
   ,output [$clog2(width_p)-1:0] x_o
   ,output [$clog2(height_p)-1:0] y_o
   ,output xy_v_o
 
-  ,output [7:0] r_o
-  ,output [7:0] g_o
-  ,output [7:0] b_o
+  ,output [bit_depth-1:0] r_o
+  ,output [bit_depth-1:0] g_o
+  ,output [bit_depth-1:0] b_o
   
   ,output hs_o
   ,output vs_o
 );
 
-reg [7:0] r_r;
-reg [7:0] g_r;
-reg [7:0] b_r;
+reg [bit_depth-1:0] r_r;
+reg [bit_depth-1:0] g_r;
+reg [bit_depth-1:0] b_r;
 
 always_ff @(posedge clk_i) begin
   if (reset_i) begin
