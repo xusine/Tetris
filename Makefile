@@ -3,6 +3,13 @@ SYNTHESYS_LIB=./rtl/lib/.
 
 VCS=vcs -full64 -sverilog -cc gcc-4.8 -cpp g++-4.8
 
+test_vga_logic:
+	make clean
+	$(VCS) $(TEST_LIB)/*.v \
+	./rtl/vga_controller.sv \
+	./sim/tb_vga_controller.sv
+
+	./simv
 
 test_matrix_memory:
 	make clean
