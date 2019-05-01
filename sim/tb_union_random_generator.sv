@@ -15,10 +15,7 @@ module tb_union_random_generator;
   )ur(
     clk_li
     ,reset_li
-    ,seed_li
-    ,v_li
     ,random_lo
-    ,v_lo
   );
 
   bsg_nonsynth_clock_gen #(
@@ -50,7 +47,7 @@ module tb_union_random_generator;
       v_li = 1'b1;
       i = 0;
     end
-    else if(v_lo) begin
+    else begin
       $display("%d, %b",i,random_lo);
       i++;
       if(i == 10) $finish;

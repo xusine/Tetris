@@ -5,4 +5,4 @@ hw/simv*
 simv*
 csrc
 ucli.key
-
+.vscode
