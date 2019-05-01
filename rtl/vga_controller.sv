@@ -3,41 +3,41 @@ A simple VGA Controller
 */
 
 module vga_controller #(
-  parameter integer width_p = 640
-  ,parameter integer height_p = 480
+  parameter integer width_p = 800
+  ,parameter integer height_p = 600
 
   ,parameter integer v_sync_pulse_p = 2
-  ,parameter integer v_sync_back_porch_p = 33
-  ,parameter integer v_sync_front_porch_p = 10
+  ,parameter integer v_sync_back_porch_p = 22
+  ,parameter integer v_sync_front_porch_p = 1
 
-  ,parameter integer h_sync_pulse_p = 96
-  ,parameter integer h_sync_back_porch_p = 48
-  ,parameter integer h_sync_front_porch_p = 16
+  ,parameter integer h_sync_pulse_p = 72
+  ,parameter integer h_sync_back_porch_p = 128
+  ,parameter integer h_sync_front_porch_p = 24
 
-  ,parameter integer bit_depth = 8
+  ,parameter integer bit_depth_p = 8
 )(
-  input clk_i // = 25MHz
+  input clk_i // = 36MHz
   ,input reset_i
 
-  ,input [bit_depth-1:0] r_i
-  ,input [bit_depth-1:0] g_i
-  ,input [bit_depth-1:0] b_i
+  ,input [bit_depth_p-1:0] r_i
+  ,input [bit_depth_p-1:0] g_i
+  ,input [bit_depth_p-1:0] b_i
 
   ,output [$clog2(width_p)-1:0] x_o
   ,output [$clog2(height_p)-1:0] y_o
   ,output xy_v_o
 
-  ,output [bit_depth-1:0] r_o
-  ,output [bit_depth-1:0] g_o
-  ,output [bit_depth-1:0] b_o
+  ,output [bit_depth_p-1:0] r_o
+  ,output [bit_depth_p-1:0] g_o
+  ,output [bit_depth_p-1:0] b_o
   
   ,output hs_o
   ,output vs_o
 );
 
-reg [bit_depth-1:0] r_r;
-reg [bit_depth-1:0] g_r;
-reg [bit_depth-1:0] b_r;
+reg [bit_depth_p-1:0] r_r;
+reg [bit_depth_p-1:0] g_r;
+reg [bit_depth_p-1:0] b_r;
 
 always_ff @(posedge clk_i) begin
   if (reset_i) begin
@@ -83,8 +83,8 @@ reg vs_r;
 
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
-    hs_r <= '0;
-    vs_r <= '0;
+    hs_r <= '1;
+    vs_r <= '1;
   end
   else begin
     if(row_r == row_size_lp - 1)
@@ -102,11 +102,43 @@ end
 assign hs_o = hs_r;
 assign vs_o = vs_r;
 
-assign x_o = row_r - h_sync_pulse_p - h_sync_back_porch_p + 1;
-assign y_o = col_r - v_sync_pulse_p - v_sync_back_porch_p + 1;
-wire x_v = row_r >= h_sync_pulse_p + h_sync_back_porch_p - 1 && row_r < h_sync_pulse_p + h_sync_back_porch_p + width_p - 1;
-wire y_v = col_r >= v_sync_pulse_p + v_sync_back_porch_p - 1 && col_r < v_sync_pulse_p + v_sync_back_porch_p + height_p - 1;
-assign xy_v_o = x_v & y_v;
+reg [$clog2(width_p)-1:0] x_r;
+reg [$clog2(height_p)-1:0] y_r;
+
+always_ff @(posedge clk_i) begin
+  if(reset_i) begin
+    x_r <= '0;
+    y_r <= '0;
+  end
+  else begin
+    x_r <= row_r - h_sync_pulse_p - h_sync_back_porch_p + 2;
+    y_r <= col_r - v_sync_pulse_p - v_sync_back_porch_p + 2;
+  end
+end
+
+assign x_o = x_r;
+assign y_o = y_r;
+
+reg x_v_r;
+reg y_v_r;
+always_ff @(posedge clk_i) begin
+  if(reset_i) begin
+    x_v_r <= '0;
+    y_v_r <= '0;
+  end
+  else begin
+    if(row_r == h_sync_pulse_p + h_sync_back_porch_p - 2)
+      x_v_r <= 1'b1;
+    else if(row_r == h_sync_pulse_p + h_sync_back_porch_p + width_p - 2)
+      x_v_r <= 1'b0;
+    if(col_r == v_sync_pulse_p + v_sync_back_porch_p - 2)
+      y_v_r <= 1'b1;
+    else if(col_r == v_sync_pulse_p + v_sync_back_porch_p + height_p - 2)
+      y_v_r <= 1'b0;
+  end
+end
+
+assign xy_v_o = x_v_r & y_v_r;
 
 always_ff @(posedge clk_i) begin
   if(vs_o) begin
