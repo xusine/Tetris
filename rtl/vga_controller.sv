@@ -83,8 +83,8 @@ reg vs_r;
 
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
-    hs_r <= '1;
-    vs_r <= '1;
+    hs_r <= 1'b1;
+    vs_r <= 1'b1;
   end
   else begin
     if(row_r == row_size_lp - 1)
@@ -139,11 +139,4 @@ always_ff @(posedge clk_i) begin
 end
 
 assign xy_v_o = x_v_r & y_v_r;
-
-always_ff @(posedge clk_i) begin
-  if(vs_o) begin
-  $display("row:%d",row_r);
-  $display("col:%d",col_r);
-  end
-end
 endmodule
