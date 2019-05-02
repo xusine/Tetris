@@ -3,6 +3,16 @@ SYNTHESYS_LIB=./rtl/lib/.
 
 VCS=vcs -full64 -sverilog -cc gcc-4.8 -cpp g++-4.8
 
+test_executor_move:
+	make clean
+	$(VCS) include/tetris.sv \
+	./rtl/executor_move.sv
+
+test_executor_new:
+	make clean
+	$(VCS) include/tetris.sv \
+	./rtl/executor_new.sv
+
 test_vga_logic:
 	make clean
 	$(VCS) $(TEST_LIB)/*.v \
