@@ -8,13 +8,14 @@ module executor_rotate #(
   ,input reset_i
   ,input v_i
 
-  ,output ready_o
+  ,output done_o
 
   ,input rotate_avail_i 
   // current state memory interface
   ,input tile_type_e type_i
   ,input [1:0] angle_i
   ,input point_t pos_i
+  ,input cm_is_ready_i
 
   ,output tile_type_e type_o
   ,output [1:0] angle_o
@@ -22,7 +23,7 @@ module executor_rotate #(
 
 );
 
-typedef enum bit [0:0] {eIDLE, eWrite} state_e;
+typedef enum bit [1:0] {eIDLE, eWrite, eWaiting} state_e;
 state_e state_r;
 always_ff @(posedge clk_i) begin
   if(reset_i) state_r <= eIDLE;
@@ -32,7 +33,10 @@ always_ff @(posedge clk_i) begin
       else state_r <= eIDLE;
     end
     eWrite: begin
-      state_r <= eIDLE;
+      state_r <= eWaiting;
+    end
+    eWaiting: begin
+      state_r <= cm_is_ready_i ? eIDLE : eWaiting;
     end
     default: begin
 
@@ -62,6 +66,6 @@ assign mm_addr_r_y_o = base_pos_r.y_m;
 assign type_o = type_r;
 assign angle_o = angle_r;
 assign set_v_o = state_r == eWrite;
-assign ready_o = state_r == eIDLE;
+assign done_o = state_r == eWaiting & cm_is_ready_i;
 
 endmodule

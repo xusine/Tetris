@@ -7,7 +7,7 @@ module executor_commit #(
   input clk_i
   ,input reset_i
   ,input v_i
-  ,output ready_o
+  ,output done_o
 
   // current state memory interface
   ,input point_t pos_i
@@ -52,7 +52,7 @@ assign mm_write_addr_o = pos_r;
 assign mm_write_data_o = shape_r;
 assign mm_write_v_o = state_r == eWrite;
 assign empty_o = state_r == eEmpty;
-assign ready_o = state_r == eIDLE;
+assign done_o = state_r == eEmpty;
 
 endmodule
 

@@ -10,18 +10,19 @@ module executor_new #(
   ,input tile_type_e tile_type_i
   ,input [1:0] tile_type_angle_i
   ,input v_i
-  // current tile interface
+  ,input cm_is_ready_i
 
+  // current tile interface
   ,output tile_type_e tile_type_o
   ,output [1:0] tile_type_angle_o
   ,output point_t pos_o
   ,output v_o
 
-  ,output ready_o
+  ,output done_o
 
 );
 
-typedef enum {eIDLE, eFetch, eUpdate} state_t;
+typedef enum {eIDLE, eFetch, eUpdate, eWaiting} state_t;
 // Update FSM
 state_t state_r;
 always_ff @(posedge clk_i) begin
@@ -37,7 +38,10 @@ always_ff @(posedge clk_i) begin
         state_r <= eUpdate;
       end
       eUpdate: begin
-        state_r <= eIDLE;
+        state_r <= eWaiting;
+      end
+      eWaiting: begin
+        state_r <= cm_is_ready_i ? eIDLE : eWaiting;
       end
     endcase
   end
@@ -79,7 +83,7 @@ memory_pattern #(
 
 
 // output ports
-assign ready_o = state_r == eIDLE;
+assign done_o = state_r == eWaiting & cm_is_ready_i;
 
 assign pos_o = point_r;
 assign tile_type_o = type_r;

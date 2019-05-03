@@ -7,7 +7,7 @@ module executor_move #(
   input clk_i
   ,input reset_i
   ,input v_i
-  ,output ready_o
+  ,output done_o
 
   // direction
   ,input direction_e direction_i
@@ -15,18 +15,19 @@ module executor_move #(
   // current tile information
   ,input point_t pos_i
   ,input [2:0] move_avail_i
+  ,input cm_is_ready_i
   
   ,output point_t new_pos_o
   ,output new_pos_v_o
 
 );
 
-typedef enum bit [0:0] {eIDLE, eWrite} state_e;
+typedef enum bit [1:0] {eIDLE, eWrite, eWaiting} state_e;
 state_e state_r;
 // whether it's valid to do this operation
 logic operation_is_valid;
 always_comb unique case(direction_i)
-  eNon: operation_is_valid = '0;
+  eNonDir: operation_is_valid = '0;
   eDown: operation_is_valid = move_avail_i[2];
   eLeft: operation_is_valid = move_avail_i[0];
   eRight: operation_is_valid = move_avail_i[1];
@@ -40,13 +41,14 @@ always_ff @(posedge clk_i) begin
     eIDLE: begin
       if(v_i & operation_is_valid) state_r <= eWrite;
     end
-    eWrite: state_r <= eIDLE;
+    eWrite: state_r <= eWaiting;
+    eWaiting: state_r <= cm_is_ready_i ? eIDLE : eWaiting;
     default: begin
 
     end
   endcase
 end
-assign ready_o = state_r == eIDLE;
+assign done_o = state_r == eWaiting & cm_is_ready_i;
 assign new_pos_v_o = state_r == eWrite;
 // new position register
 reg [$clog2(width_p):0] mm_base_addr_x_r;
@@ -59,7 +61,7 @@ always_ff @(posedge clk_i) begin
   end
   else if(state_r == eIDLE && v_i) begin
     unique case(direction_i)
-      eNon:begin 
+      eNonDir:begin 
         
       end
       eDown: if(move_avail_i[2]) begin

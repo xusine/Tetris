@@ -23,7 +23,7 @@ module game_plate #(
   ,output lose_o
 );
 
-typedef enum bit [2:0] {eFetch, eDecode,eNew, eNewNext, eMove, eRotate, eCommit, eCheck, eLost} state_e;
+typedef enum bit [3:0] {eFetch, eDecode,eNew, eNewNext, eMove, eRotate, eCommit, eCheck, eLost} state_e;
 
 state_e state_r, state_n; // state
 opcode_e opcode_r;
@@ -32,43 +32,53 @@ always_comb unique case(opcode_r)
   eMoveLeft: move_direction = eLeft;
   eMoveRight: move_direction = eRight;
   eMoveDown: move_direction = eDown;
-  default: move_direction = eNon;
+  default: move_direction = eNonDir;
 endcase
 // FSM
-wire executor_is_done;
+logic executor_is_done;
 wire is_lost_n;
-always_comb unique case(state_n) 
-  eFetch: begin
-    if(opcode_empty_i) 
-      state_n = eDecode;
-    else begin
-      state_n = eFetch;
+
+always_ff @(posedge clk_i) begin
+  if(reset_i) begin
+    state_r <= eFetch;
+  end
+  else unique case(state_r) 
+    eFetch: begin
+      if(!opcode_empty_i) state_r <= eDecode;
+      else state_r <= eFetch;
     end
-  end
-  eDecode: begin
-    unique case(opcode_r) 
-      eNew: state_n = eNew;
-      eMoveLeft: state_n = eMove;
-      eMoveRight: state_n = eMove;
-      eMoveDown: state_n = eMove;
-      eRotate: state_n = eRotate;
-      eCommit: state_n = eCommit;
-      eCheck: state_n = eCheck;
-    endcase
-  end
-  eNew: begin
-    if(executor_is_done) state_n = eNewNext; else state_n = eNew;
-  end
-  eLost: begin
-    if(is_lost_n) state_n = eLost; else state_n = eFetch;
-  end
-  default: begin
-    if(executor_is_done) state_n = eFetch; else state_n = state_r;
-  end
+    eDecode: begin
+      unique case(opcode_r) 
+        eNew: state_r = eNew;
+        eMoveLeft: state_r = eMove;
+        eMoveRight: state_r = eMove;
+        eMoveDown: state_r = eMove;
+        eRotate: state_r = eRotate;
+        eCommit: state_r = eCommit;
+        eCheck: state_r = eCheck;
+      endcase
+    end
+    eNew: begin
+      if(executor_is_done) state_r <= eNewNext;
+    end
+    eLost: begin
+      if(!is_lost_n) state_r <= eFetch;
+    end
+    default: begin
+      if(executor_is_done) state_r <= eFetch;
+    end
+  endcase
+end
+
+logic new_is_done, move_is_done, rotate_is_ready, commit_is_done, check_is_done;
+always_comb unique case(state_r)
+  eNew: executor_is_done = new_is_done;
+  eMove: executor_is_done = move_is_done;
+  eRotate: executor_is_done = rotate_is_ready;
+  eCommit: executor_is_done = commit_is_done;
+  eCheck: executor_is_done = check_is_done;
+  default: executor_is_done = '1;
 endcase
-
-
-logic executor_is_done, mm_ready, cm_is_ready;
 
 logic [width_p-1:0] scanner_output_data_o;
 assign dis_logic_mm_o = scanner_output_data_o[dis_logic_x_i];
@@ -166,8 +176,8 @@ current_tile_memory cm(
   ,.angle_o(cm_angle)
   // Next block information
   ,.next_type_o(cm_n_type)
-  ,.next_angle_o(cm_n_shape)
-  ,.next_shape_o(cm_n_angle)
+  ,.next_angle_o(cm_n_angle)
+  ,.next_shape_o(cm_n_shape)
   // Movement check
   ,.move_avail_o(cm_move_avail)
   ,.tile_in_game_area_o(cm_tile_in_game_area)
@@ -188,13 +198,14 @@ executor_new #(
   ,.tile_type_i(cm_n_type)
   ,.tile_type_angle_i(cm_n_angle)
   ,.v_i(state_r == eNew)
+  ,.cm_is_ready_i(cm_is_ready)
 
   ,.tile_type_o(new_set_tile_type)
   ,.tile_type_angle_o(new_set_tile_angle)
   ,.pos_o(new_new_point)
   ,.v_o(new_set_v)
 
-  ,.ready_o()
+  ,.done_o(new_is_done)
 
 );
 
@@ -205,12 +216,13 @@ executor_move #(
   .clk_i(clk_i)
   ,.reset_i(reset_i)
   ,.v_i(state_r == eMove)
-  ,.ready_o()
+  ,.done_o(move_is_done)
 
   ,.direction_i(move_direction)
 
   ,.pos_i(cm_pos)
   ,.move_avail_i(cm_move_avail[2:0])
+  ,.cm_is_ready_i(cm_is_ready)
 
   ,.new_pos_o(move_new_point)
   ,.new_pos_v_o(move_set_point_v)
@@ -222,15 +234,16 @@ executor_rotate #(
 ) exe_rotate (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
-  ,.v_i()
+  ,.v_i(state_r == eRotate)
 
-  ,.ready_o()
+  ,.done_o(rotate_is_ready)
 
   ,.rotate_avail_i(cm_move_avail[3])
 
   ,.type_i(cm_type)
   ,.angle_i(cm_angle)
   ,.pos_i(cm_pos)
+  ,.cm_is_ready_i(cm_is_ready)
 
   ,.type_o(rotate_set_tile_type)
   ,.angle_o(rotate_set_tile_angle)
@@ -243,8 +256,8 @@ executor_commit #(
 ) exe_commit (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
-  ,.v_i()
-  ,.ready_o()
+  ,.v_i(state_r == eCommit)
+  ,.done_o(commit_is_done)
 
   ,.pos_i(cm_pos)
   ,.shape_i(cm_shape)
@@ -262,8 +275,8 @@ executor_check #(
 ) exe_check (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
-  ,.v_i()
-  ,.ready_o()
+  ,.v_i(state_r == eCheck)
+  ,.done_o(check_is_done)
 
   ,.mm_read_addr_o(executor_check_read_addr)
   ,.mm_read_data_i(executor_check_read_data)

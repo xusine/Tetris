@@ -5,7 +5,7 @@ module memory_str_score#(
   input [$clog2(depth_p)-1:0] addr_i
   ,output logic [width_p-1:0] data_o
 );
-always unique case(addr_i)
+always_comb unique case(addr_i)
   0: data_o = 0;
   1: data_o = 0;
   2: data_o = 0;

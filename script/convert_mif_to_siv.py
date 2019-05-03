@@ -20,7 +20,7 @@ def main():
     print("  input [$clog2(depth_p)-1:0] addr_i")
     print("  ,output logic [width_p-1:0] data_o")
     print(");")
-    print("always unique case(addr_i)")
+    print("always_comb unique case(addr_i)")
     for kk,vv in enumerate(k):
         print("  {}: data_o = {};".format(vv, v[kk]))
     print("  default: data_o = 'X;")

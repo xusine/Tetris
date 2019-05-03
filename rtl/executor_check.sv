@@ -5,7 +5,7 @@ module executor_check #(
   input clk_i
   ,input reset_i
   ,input v_i
-  ,output ready_o
+  ,output done_o
 
   // matrix memory interface
   ,output [$clog2(height_p)-1:0] mm_read_addr_o
@@ -45,33 +45,33 @@ always_ff @(posedge clk_i) begin
   endcase
 end
 assign mm_read_addr_o = mm_addr_r_r;
-assign ready_o = state_r == eIDLE;
+assign done_o = state_r == eCheck && mm_addr_r_r == height_p-1 && mm_read_data_i != '1;
 
 // update memory address
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
-    mm_addr_r_r <= '0;
-    mm_addr_w_r <= '0;
+    mm_addr_r_r <= height_p-1;
+    mm_addr_w_r <= height_p-1;
   end
   else unique case(state_r) 
     eIDLE: begin
-      mm_addr_r_r <= '0;
-      mm_addr_w_r <= '0;
+      mm_addr_r_r <= height_p-1;
+      mm_addr_w_r <= height_p-1;
     end
     eCheck: begin
-      mm_addr_r_r <= mm_addr_r_r + 1;
+      mm_addr_r_r <= mm_addr_r_r - 1;
       if(mm_read_data_i != '1) begin
-        mm_addr_w_r <= mm_addr_w_r + 1;
+        mm_addr_w_r <= mm_addr_w_r - 1;
       end
     end
     eMove: begin
       if(mm_addr_w_r == height_p - 1) begin
-        mm_addr_w_r <= '0;
-        mm_addr_r_r <= '0;
+        mm_addr_w_r <= height_p-1;
+        mm_addr_r_r <= height_p-1;
       end
       else begin
-        mm_addr_r_r <= mm_addr_r_r + 1;
-        mm_addr_w_r <= mm_addr_w_r + 1;
+        mm_addr_r_r <= mm_addr_r_r - 1;
+        mm_addr_w_r <= mm_addr_w_r - 1;
       end
     end
     default: begin
