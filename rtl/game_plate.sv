@@ -2,28 +2,29 @@ import tetris::*;
 module game_plate #(
   parameter integer width_p = 16
   ,parameter integer height_p = 32
+  ,parameter debug_p = 1
 )(
   input clk_i
   ,input reset_i
   
-  // FIFO interface
   ,input opcode_e opcode_i
-  ,input opcode_empty_i
-  ,output opcode_read_i
+  ,input opcode_v_i
 
   // ports for display unit
   ,input [$clog2(width_p)-1:0] dis_logic_x_i
   ,input [$clog2(height_p)-1:0] dis_logic_y_i
   ,output dis_logic_mm_o // in matrix memory
   ,output dis_logic_cm_o // current state memory
-  ,output [3:0][3:0] dis_logic_next_block
+  ,output [3:0][3:0] dis_logic_next_block_o
 
   // game information
-  ,output line_elimination_o
+  ,output [$clog2(height_p)-1:0] line_elimination_o
+  ,output line_elimination_v_o
   ,output lose_o
+  ,output done_o
 );
 
-typedef enum bit [3:0] {eFetch, eDecode,eNew, eNewNext, eMove, eRotate, eCommit, eCheck, eLost} state_e;
+typedef enum bit [3:0] {eFetch, eDecode,eOpNew, eOpNewNext, eOpMove, eOpRotate, eOpCommit, eOpCheck, eOpLost} state_e;
 
 state_e state_r, state_n; // state
 opcode_e opcode_r;
@@ -36,7 +37,9 @@ always_comb unique case(opcode_r)
 endcase
 // FSM
 logic executor_is_done;
-wire is_lost_n;
+
+logic lose_r;
+assign lose_o = lose_r;
 
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
@@ -44,25 +47,32 @@ always_ff @(posedge clk_i) begin
   end
   else unique case(state_r) 
     eFetch: begin
-      if(!opcode_empty_i) state_r <= eDecode;
+      if(lose_r) state_r <= eOpLost;
+      else if(opcode_v_i) state_r <= eDecode;
       else state_r <= eFetch;
     end
     eDecode: begin
       unique case(opcode_r) 
-        eNew: state_r = eNew;
-        eMoveLeft: state_r = eMove;
-        eMoveRight: state_r = eMove;
-        eMoveDown: state_r = eMove;
-        eRotate: state_r = eRotate;
-        eCommit: state_r = eCommit;
-        eCheck: state_r = eCheck;
+        eNew: state_r <= eOpNew;
+        eMoveLeft: state_r <= eOpMove;
+        eMoveRight: state_r <= eOpMove;
+        eMoveDown: state_r <= eOpMove;
+        eRotate: state_r <= eOpRotate;
+        eCommit: state_r <= eOpCommit;
+        eCheck: state_r <= eOpCheck;
+        default: begin
+
+        end
       endcase
     end
-    eNew: begin
-      if(executor_is_done) state_r <= eNewNext;
+    eOpNew: begin
+      if(executor_is_done) state_r <= eOpNewNext;
     end
-    eLost: begin
-      if(!is_lost_n) state_r <= eFetch;
+    eOpCheck: begin
+      if(executor_is_done) state_r <= eOpLost;
+    end
+    eOpLost: begin
+      if(!lose_r) state_r <= eFetch;
     end
     default: begin
       if(executor_is_done) state_r <= eFetch;
@@ -72,13 +82,15 @@ end
 
 logic new_is_done, move_is_done, rotate_is_ready, commit_is_done, check_is_done;
 always_comb unique case(state_r)
-  eNew: executor_is_done = new_is_done;
-  eMove: executor_is_done = move_is_done;
-  eRotate: executor_is_done = rotate_is_ready;
-  eCommit: executor_is_done = commit_is_done;
-  eCheck: executor_is_done = check_is_done;
-  default: executor_is_done = '1;
+  eOpNew: executor_is_done = new_is_done;
+  eOpMove: executor_is_done = move_is_done;
+  eOpRotate: executor_is_done = rotate_is_ready;
+  eOpCommit: executor_is_done = commit_is_done;
+  eOpCheck: executor_is_done = check_is_done;
+  default: executor_is_done = '0;
 endcase
+
+assign done_o = executor_is_done;
 
 logic [width_p-1:0] scanner_output_data_o;
 assign dis_logic_mm_o = scanner_output_data_o[dis_logic_x_i];
@@ -96,6 +108,7 @@ wire executor_check_write_v;
 point_t block_memory_write_addr;
 wire [3:0][3:0] block_memory_write_data;
 wire executer_commit_write_v;
+wire mm_ready;
 
 matrix_memory #(
   .width_p(width_p)
@@ -113,7 +126,7 @@ matrix_memory #(
   ,.read_block_addr_i(block_memory_read_addr)
   ,.read_block_data_o(block_memory_read_data)
   // First row
-  ,.first_row_i()
+  ,.first_row_o()
   // executor check
   ,.write_addr_i(executor_check_write_addr)
   ,.write_data_i(executor_check_write_data)
@@ -128,20 +141,20 @@ matrix_memory #(
 wire cm_empty;
 
 tile_type_e cm_set_tile_type, new_set_tile_type, rotate_set_tile_type;
-assign cm_set_tile_type = state_r == eNew ? new_set_tile_type : rotate_set_tile_type;
+assign cm_set_tile_type = state_r == eOpNew ? new_set_tile_type : rotate_set_tile_type;
 
 wire [1:0] new_set_tile_angle;
 wire [1:0] rotate_set_tile_angle;
-wire [1:0] cm_set_tile_angle = state_r == eNew ? new_set_tile_angle : rotate_set_tile_angle;
+wire [1:0] cm_set_tile_angle = state_r == eOpNew ? new_set_tile_angle : rotate_set_tile_angle;
 
 wire new_set_v, rotate_set_v, cm_set_v;
-assign cm_set_v = state_r == eNew ? new_set_v : rotate_set_v;
+assign cm_set_v = state_r == eOpNew ? new_set_v : rotate_set_v;
 
 point_t cm_new_point, new_new_point, move_new_point;
-assign cm_new_point = state_r == eNew ? new_new_point : move_new_point;
+assign cm_new_point = state_r == eOpNew ? new_new_point : move_new_point;
 
 wire cm_set_point_v, move_set_point_v;
-assign cm_set_point_v = state_r == eNew ? new_set_tile_angle : move_set_point_v;
+assign cm_set_point_v = state_r == eOpNew ? new_set_v : move_set_point_v;
 
 point_t cm_pos;
 shape_t cm_shape;
@@ -150,18 +163,19 @@ wire [1:0] cm_angle;
 
 tile_type_e cm_n_type;
 shape_t cm_n_shape;
-assign dis_logic_next_block = cm_n_shape;
+assign dis_logic_next_block_o = cm_n_shape;
 wire [1:0] cm_n_angle;
 
 wire [3:0] cm_move_avail;
 wire cm_tile_in_game_area;
+wire cm_is_ready;
 
 current_tile_memory cm(
   .clk_i(clk_i)
   ,.reset_i(reset_i)
 
   ,.empty_i(cm_empty) // executer commit
-  ,.fetch_next_i(state_r == eNewNext)
+  ,.fetch_next_i(state_r == eOpNewNext)
   // For new and rotate
   ,.tile_type_i(cm_set_tile_type)
   ,.tile_type_angle_i(cm_set_tile_angle)
@@ -197,7 +211,7 @@ executor_new #(
 
   ,.tile_type_i(cm_n_type)
   ,.tile_type_angle_i(cm_n_angle)
-  ,.v_i(state_r == eNew)
+  ,.v_i(state_r == eOpNew)
   ,.cm_is_ready_i(cm_is_ready)
 
   ,.tile_type_o(new_set_tile_type)
@@ -215,7 +229,7 @@ executor_move #(
 ) exe_move (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
-  ,.v_i(state_r == eMove)
+  ,.v_i(state_r == eOpMove)
   ,.done_o(move_is_done)
 
   ,.direction_i(move_direction)
@@ -234,7 +248,7 @@ executor_rotate #(
 ) exe_rotate (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
-  ,.v_i(state_r == eRotate)
+  ,.v_i(state_r == eOpRotate)
 
   ,.done_o(rotate_is_ready)
 
@@ -256,7 +270,7 @@ executor_commit #(
 ) exe_commit (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
-  ,.v_i(state_r == eCommit)
+  ,.v_i(state_r == eOpCommit)
   ,.done_o(commit_is_done)
 
   ,.pos_i(cm_pos)
@@ -275,7 +289,7 @@ executor_check #(
 ) exe_check (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
-  ,.v_i(state_r == eCheck)
+  ,.v_i(state_r == eOpCheck)
   ,.done_o(check_is_done)
 
   ,.mm_read_addr_o(executor_check_read_addr)
@@ -284,8 +298,25 @@ executor_check #(
   ,.mm_write_addr_o(executor_check_write_addr)
   ,.mm_write_data_o(executor_check_write_data)
   ,.mm_write_v_o(executor_check_write_v)
+
+  ,.combine_number_o(line_elimination_o)
 );
 
+assign line_elimination_v_o = executor_is_done && state_r == eOpCheck;
 
+always_ff @(posedge clk_i) begin
+  if(reset_i) lose_r <= '0;
+  else if (state_r == eOpMove && executor_is_done && move_direction == eDown)
+    lose_r <= !cm_tile_in_game_area;
+end
+wire [$clog2(width_p):0] cm_addr_x = dis_logic_x_i - cm_pos.x_m;
+wire [$clog2(height_p):0] cm_addr_y = dis_logic_y_i - cm_pos.y_m;
+assign dis_logic_cm_o = (cm_addr_x < 4 && cm_addr_y < 4) ? cm_shape[cm_addr_y[1:0]][cm_addr_x[1:0]] : '0;
+
+if(debug_p)
+  always_ff @(posedge clk_i) begin
+    $display("From game_plate: current_state: %s",state_r.name());
+    
+  end
 endmodule
 

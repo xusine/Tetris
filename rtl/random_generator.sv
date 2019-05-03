@@ -33,7 +33,7 @@ assign random_n = feedback;
 
 
 for(genvar i = 1; i < width_p; ++i) begin: FEEDBACK
-  if(mask_p &(1 << i)) begin: EXIST_FEEDBACK
+  if((mask_p & (32'b1 << i)) != '0) begin: EXIST_FEEDBACK
     assign feedback[i] = random_r[width_p-1] ^ random_r[i-1];
   end
   else begin: NONE_FEEDBACK

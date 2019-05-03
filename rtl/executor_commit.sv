@@ -28,7 +28,7 @@ always_ff @(posedge clk_i) begin
     state_r <= eIDLE;
   end
   else unique case(state_r) 
-    eIDLE: state_r <= eIDLE ? eWrite : eIDLE;
+    eIDLE: state_r <= v_i ? eWrite : eIDLE;
     eWrite: state_r <= eWaiting;
     eWaiting: state_r <= mm_is_ready_i ? eEmpty : eWaiting;
     eEmpty: state_r <= eIDLE;

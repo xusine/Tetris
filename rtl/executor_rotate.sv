@@ -60,9 +60,6 @@ always_ff @(posedge clk_i) begin
   end
 end
 
-assign rom_read_addr_o = {type_r, angle_r};
-assign mm_addr_r_x_o = base_pos_r.x_m;
-assign mm_addr_r_y_o = base_pos_r.y_m;
 assign type_o = type_r;
 assign angle_o = angle_r;
 assign set_v_o = state_r == eWrite;

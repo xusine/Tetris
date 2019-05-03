@@ -42,8 +42,8 @@ typedef enum bit [2:0] {eIDLE, eJudgeLeft, eJudgeRight, eJudgeDown, eJudgeRotate
 // FSM
 state_e state_r;
 always_ff @(posedge clk_i) begin
-  if(reset_i | empty_i) begin
-    state_r <= eIDLE;
+  if(reset_i) begin
+    state_r <= eSetNext;
   end
   else unique case(state_r) 
     eIDLE: begin
@@ -59,8 +59,13 @@ always_ff @(posedge clk_i) begin
     eJudgeDown: state_r <= eJudgeRotate;
     eJudgeRotate: state_r <= eIDLE;
     eSetNext: state_r <= eIDLE;
+    default: begin
+
+    end
   endcase
 end
+
+assign ready_o = state_r == eIDLE;
 // Data path
 
 shape_info_t rom_read_data;
@@ -84,12 +89,12 @@ always_ff @(posedge clk_i) begin
     if(state_r == eIDLE & tile_type_v_i) begin
       tile_type_r <= tile_type_i;
       tile_angle_r <= tile_type_angle_i;
-      shape_r <= rom_read_data_i.shape_m;
-      tile_min_y_r <= rom_read_data_i.min_y_m;
+      shape_r <= rom_read_data.shape_m;
+      tile_min_y_r <= rom_read_data.min_y_m;
     end
     if(state_r == eIDLE & pos_v_i) begin
       pos_r <= new_pos_i;
-      tile_in_game_area_r <= (new_pos_i.y_m + tile_min_y_r >= 0);
+      tile_in_game_area_r <= (new_pos_i.y_m + ($clog2(scene_height_p))'(tile_min_y_r) < scene_height_p);
     end
   end
 end
@@ -145,6 +150,9 @@ always_comb unique case(state_r)
     mm_addr_o.x_m = pos_r.x_m;
     mm_addr_o.y_m = pos_r.y_m + 1;
   end
+  default: begin
+    mm_addr_o = pos_r;
+  end
 endcase
 
 // random number generator
@@ -155,7 +163,6 @@ wire [4:0] random_addr_n = rg_out[14:10] ^ rg_out[9:5] ^ rg_out[4:0];
 union_random_generator #(
   .width_p(16)
   ,.lfsr_num(4)
-  ,.mask_p({294,7444, 18223, 51})
 ) rg (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
@@ -166,14 +173,14 @@ union_random_generator #(
 shape_t next_shape_r;
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
-    random_addr_r <= '0;
+    random_addr_r <= 5;
     next_shape_r <= '0;
   end
   else if (state_r == eIDLE & fetch_next_i) begin
     random_addr_r <= random_addr_n[4:2] == 0 ? {~random_addr_n[4:2], random_addr_n[1:0]} : random_addr_n;
   end
   else if(state_r == eSetNext) begin
-    next_shape_r <= rom_read_data_i.shape_m;
+    next_shape_r <= rom_read_data.shape_m;
   end
 end
 
@@ -181,9 +188,9 @@ logic [4:0] rom_read_addr;
 
 always_comb begin
   if(state_r == eIDLE)
-    rom_read_addr = {tile_type_i,tile_type_angle_i};
+    rom_read_addr = {3'(tile_type_i),tile_type_angle_i};
   else if(state_r == eJudgeRotate)
-    rom_read_addr = {tile_type_i,tile_type_angle_i + 1};
+    rom_read_addr = {3'(tile_type_i),tile_type_angle_i + 1};
   else if(state_r == eSetNext)
     rom_read_addr = random_addr_r;
 end
@@ -193,11 +200,11 @@ memory_pattern #(
   ,.depth_p(32)
 ) rom (
   .addr_i(rom_read_addr)
-  ,.data_o(rom_read_data_i)
+  ,.data_o(rom_read_data)
 );
 
-assign next_type_o = random_addr_r[4:2];
-assign next_tile_angle_o = random_addr_r[1:0];
+assign next_type_o = tile_type_e'(random_addr_r[4:2]);
+assign next_angle_o = random_addr_r[1:0];
 assign next_shape_o = next_shape_r;
 
 

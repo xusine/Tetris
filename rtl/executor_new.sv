@@ -69,7 +69,7 @@ always_ff @(posedge clk_i) begin
   end
   else if(state_r == eFetch) begin
     point_r.x_m <= width_p/2 - 2;
-    point_r.y_m <= ~tile_rom_read_data.max_y_m; // -(y+1) = -y - 1 = ~y
+    point_r.y_m <= ~($clog2(height_p)+1)'(tile_rom_read_data.max_y_m); // -(y+1) = -y - 1 = ~y
   end
 end
 // ROM

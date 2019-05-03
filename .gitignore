@@ -8,3 +8,4 @@ ucli.key
 .vscode
 temp
 rep.*
+obj_dir
