@@ -12,13 +12,7 @@ module executor_move #(
   // direction
   ,input direction_e direction_i
 
-  // matrix memory read interface
-  ,output [$clog2(width_p):0] mm_addr_r_x_o
-  ,output [$clog2(height_p):0] mm_addr_r_y_o
-  ,input [3:0][3:0] mm_data_i
-
   // current tile information
-  ,input shape_t shape_i
   ,input point_t pos_i
   ,input [2:0] move_avail_i
   
@@ -27,19 +21,25 @@ module executor_move #(
 
 );
 
-typedef enum [1:0] {eIDLE, eJudge, eWrite} state_e;
+typedef enum bit [0:0] {eIDLE, eWrite} state_e;
 state_e state_r;
 // whether it's valid to do this operation
-wire operation_is_not_valid = &(shape_i & mm_data_i);
+logic operation_is_valid;
+always_comb unique case(direction_i)
+  eNon: operation_is_valid = '0;
+  eDown: operation_is_valid = move_avail_i[2];
+  eLeft: operation_is_valid = move_avail_i[0];
+  eRight: operation_is_valid = move_avail_i[1];
+  default: operation_is_valid = '0;
+endcase
 // FSM
 always_ff @(posedge clk_i) begin
   if(reset_i)
     state_r <= eIDLE;
   else unique case(state_r)
     eIDLE: begin
-      if(v_i) state_r <= eJudge;
+      if(v_i & operation_is_valid) state_r <= eWrite;
     end
-    eJudge: state_r <= operation_is_not_valid ? eIDLE : eWrite;
     eWrite: state_r <= eIDLE;
     default: begin
 
@@ -59,9 +59,8 @@ always_ff @(posedge clk_i) begin
   end
   else if(state_r == eIDLE && v_i) begin
     unique case(direction_i)
-      eUp:begin 
-        mm_base_addr_x_r <= pos_i.x_m;
-        mm_base_addr_y_r <= pos_i.y_m - 1;
+      eNon:begin 
+        
       end
       eDown: if(move_avail_i[2]) begin
         mm_base_addr_x_r <= pos_i.x_m;
@@ -78,9 +77,6 @@ always_ff @(posedge clk_i) begin
     endcase
   end
 end
-
-assign mm_addr_r_x_o = mm_base_addr_x_r;
-assign mm_addr_r_y_o = mm_base_addr_y_r;
 assign new_pos_o.x_m = mm_base_addr_x_r;
 assign new_pos_o.y_m = mm_base_addr_y_r;
 endmodule

@@ -10,11 +10,7 @@ module executor_rotate #(
 
   ,output ready_o
 
-  // matrix memory read interface
-  ,output [$clog2(width_p):0] mm_addr_r_x_o
-  ,output [$clog2(height_p):0] mm_addr_r_y_o
-  ,input [3:0][3:0] mm_data_i
-
+  ,input rotate_avail_i 
   // current state memory interface
   ,input tile_type_e type_i
   ,input [1:0] angle_i
@@ -22,26 +18,18 @@ module executor_rotate #(
 
   ,output tile_type_e type_o
   ,output [1:0] angle_o
-  ,output type_v_o
-
-  // ROM interface
-  ,output [4:0] rom_read_addr_o
-  ,input shape_info_t rom_data_i
+  ,output set_v_o
 
 );
 
-typedef enum bit [1:0] {eIDLE, eCheck, eWrite} state_e;
+typedef enum bit [0:0] {eIDLE, eWrite} state_e;
 state_e state_r;
-wire operation_is_not_valid = &(rom_data_i.shape_m & mm_data_i);
 always_ff @(posedge clk_i) begin
   if(reset_i) state_r <= eIDLE;
   else unique case(state_r)
     eIDLE: begin
-      if(v_i) state_r <= eCheck;
+      if(v_i & rotate_avail_i) state_r <= eWrite;
       else state_r <= eIDLE;
-    end
-    eCheck: begin
-      state_r <= operation_is_not_valid ? eIDLE : eWrite;
     end
     eWrite: begin
       state_r <= eIDLE;
@@ -73,7 +61,7 @@ assign mm_addr_r_x_o = base_pos_r.x_m;
 assign mm_addr_r_y_o = base_pos_r.y_m;
 assign type_o = type_r;
 assign angle_o = angle_r;
-assign type_v_o = state_r == eWrite;
+assign set_v_o = state_r == eWrite;
 assign ready_o = state_r == eIDLE;
 
 endmodule

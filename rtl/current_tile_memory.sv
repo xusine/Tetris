@@ -28,12 +28,8 @@ module current_tile_memory(
   ,output shape_t next_shape_o
 
   // Movement Information
-  ,output [2:0] move_avail_o
+  ,output [3:0] move_avail_o
   ,output tile_in_game_area_o
-
-  // ROM interface
-  ,output logic [4:0] rom_read_addr_o
-  ,input shape_info_t rom_read_data_i
 
   ,output ready_o
 
@@ -42,7 +38,7 @@ module current_tile_memory(
   ,input [3:0][3:0] mm_data_i
 );
 
-typedef enum bit [2:0] {eIDLE, eJudgeLeft, eJudgeRight, eJudgeDown, eSetNext} state_e;
+typedef enum bit [2:0] {eIDLE, eJudgeLeft, eJudgeRight, eJudgeDown, eJudgeRotate, eSetNext} state_e;
 // FSM
 state_e state_r;
 always_ff @(posedge clk_i) begin
@@ -60,11 +56,15 @@ always_ff @(posedge clk_i) begin
     end
     eJudgeLeft: state_r <= eJudgeRight;
     eJudgeRight: state_r <= eJudgeDown;
-    eJudgeDown: state_r <= eIDLE;
+    eJudgeDown: state_r <= eJudgeRotate;
+    eJudgeRotate: state_r <= eIDLE;
     eSetNext: state_r <= eIDLE;
   endcase
 end
 // Data path
+
+shape_info_t rom_read_data;
+
 tile_type_e tile_type_r;
 reg [1:0] tile_angle_r;
 point_t pos_r;
@@ -103,7 +103,7 @@ assign tile_in_game_area_o = tile_in_game_area_r;
 
 // Movement availability
 wire operation_is_not_valid = &(mm_data_i & shape_r);
-reg [2:0] move_valid_r;
+reg [3:0] move_valid_r;
 always_ff @(posedge clk_i) begin
   if(reset_i | empty_i) begin
     move_valid_r <= '0;
@@ -117,6 +117,9 @@ always_ff @(posedge clk_i) begin
     end
     eJudgeDown: begin
       move_valid_r[2] <= ~ operation_is_not_valid;
+    end
+    eJudgeRotate: begin
+      move_valid_r[3] <= ~operation_is_not_valid;
     end
     default: begin
 
@@ -174,12 +177,24 @@ always_ff @(posedge clk_i) begin
   end
 end
 
+logic [4:0] rom_read_addr;
+
 always_comb begin
   if(state_r == eIDLE)
-    rom_read_addr_o = {tile_type_i,tile_type_angle_i};
+    rom_read_addr = {tile_type_i,tile_type_angle_i};
+  else if(state_r == eJudgeRotate)
+    rom_read_addr = {tile_type_i,tile_type_angle_i + 1};
   else if(state_r == eSetNext)
-    rom_read_addr_o = random_addr_r;
+    rom_read_addr = random_addr_r;
 end
+// ROM
+memory_pattern #(
+  .width_p(24)
+  ,.depth_p(32)
+) rom (
+  .addr_i(rom_read_addr)
+  ,.data_o(rom_read_data_i)
+);
 
 assign next_type_o = random_addr_r[4:2];
 assign next_tile_angle_o = random_addr_r[1:0];

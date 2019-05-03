@@ -1,4 +1,4 @@
-module executor_check#(
+module executor_check #(
   parameter integer width_p = 16
   ,parameter integer height_p = 32
 )(

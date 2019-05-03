@@ -15,8 +15,7 @@ module executor_commit #(
   ,output empty_o
 
   // matrix memory interface
-  ,output [$clog2(width_p)-1:0] mm_write_addr_x_o
-  ,output [$clog2(height_p)-1:0] mm_write_addr_y_o 
+  ,output point_t mm_write_addr_o
   ,output [3:0][3:0] mm_write_data_o
   ,output mm_write_v_o
   ,input mm_is_ready_i
@@ -49,8 +48,7 @@ always_ff @(posedge clk_i) begin
   end
 end
 
-assign mm_write_addr_x_o = pos_r.x_m;
-assign mm_write_addr_y_o = pos_r.y_m;
+assign mm_write_addr_o = pos_r;
 assign mm_write_data_o = shape_r;
 assign mm_write_v_o = state_r == eWrite;
 assign empty_o = state_r == eEmpty;
