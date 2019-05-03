@@ -1,15 +1,17 @@
 package tetris;
 
-typedef enum [2:0] {eNOP, eNew, eRotate, eMove, eCheck} opcode_e;
+typedef enum bit [3:0] {eNew, eMoveLeft, eMoveRight, eMoveDown, eRotate, eCommit, eCheck} opcode_e;
 
 typedef enum bit [2:0] {eNon = 3'd0, eSquire = 3'd1, eRightL = 3'd2, eI = 3'd3, eLeftL = 3'd4, eRightZ = 3'd5, eLeftZ = 3'd6, eT = 3'd7} tile_type_e;
 
-typedef enum [1:0] {eUp, eDown, eLeft, eRight} direction_e;
+typedef enum bit [1:0] {eUp, eDown, eLeft, eRight} direction_e;
 // newTile: type(4:0), position(2:0)(10-6) (fetch->put(3 clock)->)
 // Rotate, Down, Left, Right, Clear: 0
 
+typedef logic [3:0][3:0] shape_t;
+
 typedef struct packed{
-    logic [3:0][3:0] shape_m;
+    shape_t shape_m;
     logic [1:0] max_x_m;
     logic [1:0] max_y_m;
     logic [1:0] min_x_m; // bias for actual X
