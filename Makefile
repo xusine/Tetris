@@ -3,15 +3,24 @@ SYNTHESYS_LIB=./rtl/lib/.
 
 VCS=vcs -full64 -sverilog -cc gcc-4.8 -cpp g++-4.8
 
-test_executor_move:
+test_game_plate:
 	make clean
 	$(VCS) include/tetris.sv \
-	./rtl/executor_move.sv
+	./rtl/union_random_generator.sv \
+	./rtl/random_generator.sv \
+	./rtl/executor_commit.sv \
+	./rtl/executor_rotate.sv \
+	./rtl/executor_move.sv \
+	./rtl/executor_new.sv \
+	./rtl/executor_check.sv \
+	./rtl/matrix_memory.sv \
+	./rtl/current_tile_memory.sv \
+	./rtl/game_plate.sv
 
-test_executor_new:
+
+test_layout_remapper:
 	make clean
-	$(VCS) include/tetris.sv \
-	./rtl/executor_new.sv
+	$(VCS) ./rtl/layout_remapper.sv
 
 test_vga_logic:
 	make clean
@@ -19,28 +28,6 @@ test_vga_logic:
 	./rtl/vga_controller.sv \
 	./sim/tb_vga_controller.sv
 
-	./simv
-
-test_matrix_memory:
-	make clean
-	$(VCS) $(TEST_LIB)/*.v \
-	./rtl/matrix_memory.sv \
-	./sim/tb_matrix_memory.sv 
-	./simv
-
-test_union_randon:
-	make clean
-	$(VCS) $(TEST_LIB)/*.v \
-	./rtl/union_random_generator.sv \
-	./rtl/random_generator.sv \
-	./sim/tb_union_random_generator.sv 
-	./simv
-
-test_random:
-	make clean
-	$(VCS) $(TEST_LIB)/*.v \
-	./rtl/random_generator.sv \
-	./sim/tb_random_generator.sv 
 	./simv
 
 clean:

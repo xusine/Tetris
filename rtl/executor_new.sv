@@ -15,14 +15,13 @@ module executor_new #(
   ,output tile_type_e tile_type_o
   ,output [1:0] tile_type_angle_o
   ,output point_t pos_o
-  ,output done_o
+
+  ,output ready_o
 
   // ROM interface
   ,output [4:0] tile_rom_read_addr_i
   ,input shape_info_t tile_rom_read_data_i
 
-  
-  
 );
 
 typedef enum {eIDLE, eFetch, eUpdate} state_t;
@@ -72,7 +71,7 @@ always_ff @(posedge clk_i) begin
   end
 end
 // output ports
-assign done_o = state_r == eIDLE;
+assign ready_o = state_r == eIDLE;
 
 assign pos_o = point_r;
 assign tile_type_o = type_r;

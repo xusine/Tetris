@@ -6,11 +6,11 @@ module executor_move #(
 )(
   input clk_i
   ,input reset_i
-  
-  ,input direction_e direction_i
   ,input v_i
+  ,output ready_o
 
-  ,output done_o
+  // direction
+  ,input direction_e direction_i
 
   // matrix memory read interface
   ,output [$clog2(width_p):0] mm_addr_r_x_o
@@ -18,18 +18,19 @@ module executor_move #(
   ,input [3:0][3:0] mm_data_i
 
   // current tile information
-  ,input shape_info_t c_shape_info_i
+  ,input shape_t shape_i
   ,input point_t pos_i
-
+  ,input [2:0] move_avail_i
+  
   ,output point_t new_pos_o
+  ,output new_pos_v_o
 
-  ,output data_v_o
 );
 
 typedef enum [1:0] {eIDLE, eJudge, eWrite} state_e;
 state_e state_r;
 // whether it's valid to do this operation
-wire operation_is_not_valid = &(c_shape_info_i.shape_m & mm_data_i);
+wire operation_is_not_valid = &(shape_i & mm_data_i);
 // FSM
 always_ff @(posedge clk_i) begin
   if(reset_i)
@@ -40,10 +41,13 @@ always_ff @(posedge clk_i) begin
     end
     eJudge: state_r <= operation_is_not_valid ? eIDLE : eWrite;
     eWrite: state_r <= eIDLE;
+    default: begin
+
+    end
   endcase
 end
-assign done_o = state_r == eIDLE;
-assign data_v_o = state_r == eWrite;
+assign ready_o = state_r == eIDLE;
+assign new_pos_v_o = state_r == eWrite;
 // new position register
 reg [$clog2(width_p):0] mm_base_addr_x_r;
 reg [$clog2(height_p):0] mm_base_addr_y_r;
@@ -59,15 +63,15 @@ always_ff @(posedge clk_i) begin
         mm_base_addr_x_r <= pos_i.x_m;
         mm_base_addr_y_r <= pos_i.y_m - 1;
       end
-      eDown: begin
+      eDown: if(move_avail_i[2]) begin
         mm_base_addr_x_r <= pos_i.x_m;
         mm_base_addr_y_r <= pos_i.y_m + 1;
       end 
-      eLeft: begin
+      eLeft: if(move_avail_i[0]) begin
         mm_base_addr_x_r <= pos_i.x_m - 1;
         mm_base_addr_y_r <= pos_i.y_m;
       end
-      eRight: begin
+      eRight: if(move_avail_i[1])begin
         mm_base_addr_x_r <= pos_i.x_m + 1;
         mm_base_addr_y_r <= pos_i.y_m;
       end

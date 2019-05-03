@@ -6,7 +6,7 @@ a combination of several random generator to make sure
 module union_random_generator #(
   parameter width_p = 32
   ,parameter lfsr_num = 4
-	,parameter integer mask_p[lfsr_num-1:0] = {1,3,4}
+	,parameter integer mask_p[lfsr_num-1:0] = {1,3,4,2}
 )(
 	input clk_i
 	,input reset_i
