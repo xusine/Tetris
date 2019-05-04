@@ -5,6 +5,7 @@ VCS=vcs -full64 -sverilog -cc gcc-4.8 -cpp g++-4.8
 
 verilator_test_game_plate:
 	verilator -Wno-fatal -sv \
+	--default-language 1800-2017 \
 	-cc include/tetris.sv \
 	./rom/memory_pattern.sv \
 	./rtl/union_random_generator.sv \

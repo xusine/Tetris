@@ -1,5 +1,7 @@
 import tetris::*;
-module current_tile_memory(
+module current_tile_memory #(
+  parameter debug_p = 1
+)(
   input clk_i
   ,input reset_i
 
@@ -206,6 +208,16 @@ memory_pattern #(
 assign next_type_o = tile_type_e'(random_addr_r[4:2]);
 assign next_angle_o = random_addr_r[1:0];
 assign next_shape_o = next_shape_r;
+
+if(debug_p)
+always_ff @(posedge clk_i) begin
+  $display("From CM: type:%s",tile_type_r.name());
+  $display("From CM: angle:%d",tile_angle_r);
+  $display("From CM: pos:(%d,%d)",pos_r.x_m, pos_r.y_m);
+  $display("From CM: Shape:");
+  for(integer i = 0; i < 4; ++i)
+    $display("%b",shape_r[i]);
+end
 
 
 endmodule

@@ -40,7 +40,7 @@ logic executor_is_done;
 
 logic lose_r;
 assign lose_o = lose_r;
-
+logic new_is_done, move_is_done, rotate_is_ready, commit_is_done, check_is_done;
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
     state_r <= eFetch;
@@ -53,6 +53,7 @@ always_ff @(posedge clk_i) begin
     end
     eDecode: begin
       unique case(opcode_r) 
+        eNop: state_r <= eFetch;
         eNew: state_r <= eOpNew;
         eMoveLeft: state_r <= eOpMove;
         eMoveRight: state_r <= eOpMove;
@@ -66,7 +67,7 @@ always_ff @(posedge clk_i) begin
       endcase
     end
     eOpNew: begin
-      if(executor_is_done) state_r <= eOpNewNext;
+      if(new_is_done) state_r <= eOpNewNext;
     end
     eOpCheck: begin
       if(executor_is_done) state_r <= eOpLost;
@@ -80,13 +81,19 @@ always_ff @(posedge clk_i) begin
   endcase
 end
 
-logic new_is_done, move_is_done, rotate_is_ready, commit_is_done, check_is_done;
+always_ff @(posedge clk_i) begin
+  if(reset_i)
+    opcode_r <= eNop;
+  else if(state_r == eFetch && opcode_v_i)
+    opcode_r <= opcode_i;
+end
+
 always_comb unique case(state_r)
-  eOpNew: executor_is_done = new_is_done;
   eOpMove: executor_is_done = move_is_done;
   eOpRotate: executor_is_done = rotate_is_ready;
   eOpCommit: executor_is_done = commit_is_done;
   eOpCheck: executor_is_done = check_is_done;
+  eOpNewNext: executor_is_done = 1'b1;
   default: executor_is_done = '0;
 endcase
 
@@ -316,7 +323,7 @@ assign dis_logic_cm_o = (cm_addr_x < 4 && cm_addr_y < 4) ? cm_shape[cm_addr_y[1:
 if(debug_p)
   always_ff @(posedge clk_i) begin
     $display("From game_plate: current_state: %s",state_r.name());
-    
+    $display("From game_plate: current_opcode_i: %s",opcode_i.name());
   end
 endmodule
 
