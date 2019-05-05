@@ -45,6 +45,10 @@ public:
         m_dut->eval();
         ++m_tick;
     }
+
+    DUT *operator ->(){
+        return m_dut;
+    }
 private:
     DUT *m_dut;
     int m_tick;

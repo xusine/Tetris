@@ -3,6 +3,7 @@ import tetris::*;
 module executor_move #(
   parameter integer width_p = 16
   ,parameter integer height_p = 32
+  ,parameter debug_p = 0
 )(
   input clk_i
   ,input reset_i
@@ -48,7 +49,7 @@ always_ff @(posedge clk_i) begin
     end
   endcase
 end
-assign done_o = state_r == eWaiting & cm_is_ready_i;
+assign done_o = state_r == eWaiting & cm_is_ready_i | ~operation_is_valid;
 assign new_pos_v_o = state_r == eWrite;
 // new position register
 reg [$clog2(width_p):0] mm_base_addr_x_r;
@@ -81,4 +82,8 @@ always_ff @(posedge clk_i) begin
 end
 assign new_pos_o.x_m = mm_base_addr_x_r;
 assign new_pos_o.y_m = mm_base_addr_y_r;
+if(debug_p)
+  always_ff @(posedge clk_i) begin
+    $display("From Move: %s",state_r.name());
+  end
 endmodule

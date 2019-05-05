@@ -19,12 +19,12 @@ verilator_test_game_plate:
 	./rtl/current_tile_memory.sv \
 	./rtl/game_plate.sv \
 	--top-module game_plate \
-	-CFLAGS "-g -O3" \
+	-CFLAGS "-g" \
 	--exe sim_verilator/game_plate.cpp
 
 	make -C obj_dir -f Vgame_plate.mk
 
-	./obj_dir/Vgame_plate > rep.txt
+	./obj_dir/Vgame_plate
 
 
 test_game_plate:

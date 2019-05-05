@@ -1,6 +1,6 @@
 import tetris::*;
 module current_tile_memory #(
-  parameter debug_p = 1
+  parameter debug_p = 0
 )(
   input clk_i
   ,input reset_i
@@ -23,6 +23,7 @@ module current_tile_memory #(
   ,output shape_t shape_o
   ,output tile_type_e type_o
   ,output [1:0] angle_o
+  ,output is_empty_o
 
   // output information
   ,output tile_type_e next_type_o
@@ -106,10 +107,10 @@ assign type_o = tile_type_r;
 assign angle_o = tile_angle_r;
 assign shape_o = shape_r;
 assign tile_in_game_area_o = tile_in_game_area_r;
-
+assign is_empty_o = tile_type_r == eNon;
 
 // Movement availability
-wire operation_is_not_valid = &(mm_data_i & shape_r);
+wire operation_is_not_valid = |(mm_data_i & shape_r);
 reg [3:0] move_valid_r;
 always_ff @(posedge clk_i) begin
   if(reset_i | empty_i) begin
@@ -211,12 +212,18 @@ assign next_shape_o = next_shape_r;
 
 if(debug_p)
 always_ff @(posedge clk_i) begin
+  $display("==============Current Memory===================");
   $display("From CM: type:%s",tile_type_r.name());
   $display("From CM: angle:%d",tile_angle_r);
   $display("From CM: pos:(%d,%d)",pos_r.x_m, pos_r.y_m);
+  $display("From CM:Check Vector:%d",move_valid_r);
   $display("From CM: Shape:");
-  for(integer i = 0; i < 4; ++i)
-    $display("%b",shape_r[i]);
+  for(integer i = 0; i < 4; ++i) begin
+    for(integer j = 0; j < 4; ++j)
+      $write("%b",shape_r[i][j]);
+    $display("");
+  end
+  
 end
 
 

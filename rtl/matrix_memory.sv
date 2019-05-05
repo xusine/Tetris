@@ -18,8 +18,9 @@ module matrix_memory #(
   ,input point_t read_block_addr_i
   ,output [3:0][3:0] read_block_data_o
 
-  // read port 4, for executor_new
-  ,output [width_p-1:0] first_row_o
+  // read port 4, for executor commit
+  ,input point_t read_block_addr_2_i
+  ,output [3:0][3:0] read_block_data_2_o
 
   // write port 1, for executor_check
   ,input [$clog2(height_p)-1:0] write_addr_i
@@ -38,8 +39,6 @@ module matrix_memory #(
 
 logic [height_p-1:0][width_p-1:0] mem_r;
 logic [3:0][3:0] block_memory_r;
-
-assign first_row_o = mem_r[0][width_p-1:0];
 
 typedef enum bit [0:0] {eNORMAL, eBLOCK} state_e;
 
@@ -119,6 +118,20 @@ for(genvar i = 0; i < 3; ++i) begin
 
   end
 end
+
+wire [3:0][$clog2(height_p):0] read_addr_y_2;
+wire [3:0][$clog2(width_p):0] read_addr_x_2;
+
+for(genvar i = 0; i < 3; ++i) begin
+  assign read_addr_y_2[i] = read_block_addr_2_i.y_m + i;
+  assign read_addr_x_2[i] = read_block_addr_2_i.x_m + i;
+  for(genvar j = 0; j < 3; ++j) begin
+    assign read_block_data_2_o[i][j] = ( (read_addr_y_2[i] >= height_p & read_addr_y_2[i] < 2*height_p - 4) | read_addr_x_2[j] >= width_p) ? 1'b1
+                                      : mem_r[read_addr_y_2[i][$clog2(height_p)-1:0]][read_addr_x_2[j][$clog2(width_p)-1:0]];
+
+  end
+end
+
 assign read_line_data_1_o = mem_r[read_line_addr_1_i][width_p-1:0];
 assign read_line_data_2_o = mem_r[read_line_addr_2_i][width_p-1:0];
 

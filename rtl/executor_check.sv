@@ -1,6 +1,7 @@
 module executor_check #(
   parameter integer width_p = 16
   ,parameter integer height_p = 32
+  ,parameter debug_p = 0
 )(
   input clk_i
   ,input reset_i
@@ -94,4 +95,10 @@ always_ff @(posedge clk_i) begin
 end
 assign mm_write_data_o = (mm_addr_w_r == height_p - 1) ? '0 : mm_read_data_i;
 assign mm_write_v_o = state_r == eMove;
+if(debug_p)
+always_ff @(posedge clk_i) begin
+  $display("From executor_check: state_r:%s",state_r.name());
+  $display("From executor_check: mm_addr_r:%b",mm_addr_r_r);
+  $display("From executor_check: mm_addr_w:%b",mm_addr_r_r);
+end
 endmodule
