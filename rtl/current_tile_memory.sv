@@ -1,6 +1,6 @@
 import tetris::*;
 module current_tile_memory #(
-  parameter debug_p = 0
+  parameter debug_p = 1
 )(
   input clk_i
   ,input reset_i
@@ -127,7 +127,7 @@ always_ff @(posedge clk_i) begin
       move_valid_r[2] <= ~ operation_is_not_valid;
     end
     eJudgeRotate: begin
-      move_valid_r[3] <= ~operation_is_not_valid;
+      move_valid_r[3] <= ~ (|(mm_data_i & rom_read_data.shape_m));
     end
     default: begin
 
@@ -188,14 +188,16 @@ always_ff @(posedge clk_i) begin
 end
 
 logic [4:0] rom_read_addr;
-
+wire [1:0] next_angle = tile_angle_r + 1;
 always_comb begin
   if(state_r == eIDLE)
     rom_read_addr = {3'(tile_type_i),tile_type_angle_i};
   else if(state_r == eJudgeRotate)
-    rom_read_addr = {3'(tile_type_i),tile_type_angle_i + 1};
+    rom_read_addr = {3'(tile_type_r),next_angle};
   else if(state_r == eSetNext)
     rom_read_addr = random_addr_r;
+  else
+    rom_read_addr = {3'(tile_type_r),tile_angle_r};
 end
 // ROM
 memory_pattern #(
@@ -213,18 +215,18 @@ assign next_shape_o = next_shape_r;
 if(debug_p)
 always_ff @(posedge clk_i) begin
   $display("==============Current Memory===================");
-  $display("From CM: type:%s",tile_type_r.name());
-  $display("From CM: angle:%d",tile_angle_r);
-  $display("From CM: pos:(%d,%d)",pos_r.x_m, pos_r.y_m);
-  $display("From CM:Check Vector:%d",move_valid_r);
+  $display("state:%s",state_r.name());
+  $display("type:%d",tile_type_r);
+  $display("angle:%d",tile_angle_r);
+  $display("pos:(%d,%d)",pos_r.x_m, pos_r.y_m);
+  $display("Check Vector:%b",move_valid_r);
   $display("From CM: Shape:");
-  for(integer i = 0; i < 4; ++i) begin
-    for(integer j = 0; j < 4; ++j)
-      $write("%b",shape_r[i][j]);
-    $display("");
+  displayMatrix(shape_r);
+  $display("ROM Address:%b", rom_read_addr);
+  $display("ROM output shape");
+  displayMatrix(rom_read_data.shape_m);
+  $display("Board output:");
+  displayMatrix(mm_data_i);
   end
-  
-end
-
 
 endmodule

@@ -16,11 +16,11 @@ module matrix_memory #(
 
   // read port 3, for current memory
   ,input point_t read_block_addr_i
-  ,output [3:0][3:0] read_block_data_o
+  ,output logic [3:0][3:0] read_block_data_o
 
   // read port 4, for executor commit
   ,input point_t read_block_addr_2_i
-  ,output [3:0][3:0] read_block_data_2_o
+  ,output logic [3:0][3:0] read_block_data_2_o
 
   // write port 1, for executor_check
   ,input [$clog2(height_p)-1:0] write_addr_i
@@ -109,26 +109,44 @@ end
 wire [3:0][$clog2(height_p):0] read_addr_y;
 wire [3:0][$clog2(width_p):0] read_addr_x;
 
-for(genvar i = 0; i < 3; ++i) begin
+for(genvar i = 0; i < 4; ++i) begin
   assign read_addr_y[i] = read_block_addr_i.y_m + i;
   assign read_addr_x[i] = read_block_addr_i.x_m + i;
-  for(genvar j = 0; j < 3; ++j) begin
-    assign read_block_data_o[i][j] = ( (read_addr_y[i] >= height_p & read_addr_y[i] < 2*height_p - 4) | read_addr_x[j] >= width_p) ? 1'b1
-                                      : mem_r[read_addr_y[i][$clog2(height_p)-1:0]][read_addr_x[j][$clog2(width_p)-1:0]];
-
+  for(genvar j = 0; j < 4; ++j) begin
+    //assign read_block_data_o[i][j] = ( (read_addr_y[i] >= height_p & read_addr_y[i] < 2*height_p - 4) | read_addr_x[j] >= width_p) ? 1'b1
+    //                                  : mem_r[read_addr_y[i][$clog2(height_p)-1:0]][read_addr_x[j][$clog2(width_p)-1:0]];
+    always_comb begin
+      if(read_addr_x[j] >= width_p)
+        read_block_data_o[i][j] = 1'b1;
+      else if(read_addr_y[i] >= height_p && read_addr_y[i] < 2*height_p - 4)
+        read_block_data_o[i][j] = 1'b1;
+      else if(read_addr_y[i] >= 2*height_p - 4 && read_addr_y[i] < 2*height_p)
+        read_block_data_o[i][j] = 1'b0;
+      else 
+        read_block_data_o[i][j] = mem_r[read_addr_y[i][$clog2(height_p)-1:0]][read_addr_x[j][$clog2(width_p)-1:0]];
+    end
   end
 end
 
 wire [3:0][$clog2(height_p):0] read_addr_y_2;
 wire [3:0][$clog2(width_p):0] read_addr_x_2;
 
-for(genvar i = 0; i < 3; ++i) begin
+for(genvar i = 0; i < 4; ++i) begin
   assign read_addr_y_2[i] = read_block_addr_2_i.y_m + i;
   assign read_addr_x_2[i] = read_block_addr_2_i.x_m + i;
-  for(genvar j = 0; j < 3; ++j) begin
-    assign read_block_data_2_o[i][j] = ( (read_addr_y_2[i] >= height_p & read_addr_y_2[i] < 2*height_p - 4) | read_addr_x_2[j] >= width_p) ? 1'b1
-                                      : mem_r[read_addr_y_2[i][$clog2(height_p)-1:0]][read_addr_x_2[j][$clog2(width_p)-1:0]];
-
+  for(genvar j = 0; j < 4; ++j) begin
+    //assign read_block_data_2_o[i][j] = ( (read_addr_y_2[i] >= height_p & read_addr_y_2[i] < 2*height_p - 4) | read_addr_x_2[j] >= width_p) ? 1'b1
+    //                                  : mem_r[read_addr_y_2[i][$clog2(height_p)-1:0]][read_addr_x_2[j][$clog2(width_p)-1:0]];
+    always_comb begin
+      if(read_addr_x_2[j] >= width_p)
+        read_block_data_2_o[i][j] = 1'b1;
+      else if(read_addr_y_2[i] >= height_p && read_addr_y_2[i] < 2*height_p - 4)
+        read_block_data_2_o[i][j] = 1'b1;
+      else if(read_addr_y_2[i] >= 2*height_p - 4)
+        read_block_data_2_o[i][j] = 1'b0;
+      else 
+        read_block_data_2_o[i][j] = mem_r[read_addr_y_2[i][$clog2(height_p)-1:0]][read_addr_x_2[j][$clog2(width_p)-1:0]];
+    end
   end
 end
 
@@ -139,10 +157,15 @@ assign is_ready_o = (current_state_r == eNORMAL);
 
 if(debug_p)
   always_ff @(posedge clk_i) begin
-    integer i = 0;
-    $display("=================Memory Info At %s:%d==================", current_state_r.name(),state_block_counter_r);
-    for(i = 0; i < height_p; i = i + 1) 
-      $display("%d:%b",i,mem_r[i]);
+    //integer i = 0;
+    //$display("=================Memory Info At %s:%d==================", current_state_r.name(),state_block_counter_r);
+    //for(i = 0; i < height_p; i = i + 1) 
+    //  $display("%d:%b",i,mem_r[i]);
+    $display("===========Matrix Memory=============");
+    $display("Block output 1:");
+    displayMatrix(read_block_data_o);
+    $display("Block output 2:");
+    displayMatrix(read_block_data_2_o);
   end
 
 

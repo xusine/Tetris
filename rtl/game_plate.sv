@@ -2,7 +2,7 @@ import tetris::*;
 module game_plate #(
   parameter integer width_p = scene_width_p
   ,parameter integer height_p = scene_height_p
-  ,parameter debug_p = 0
+  ,parameter debug_p = 1
 )(
   input clk_i
   ,input reset_i
@@ -137,7 +137,7 @@ shape_t block_memory_read_2_data;
 matrix_memory #(
   .width_p(width_p)
   ,.height_p(height_p)
-  ,.debug_p(debug_p)
+  ,.debug_p(0)
 ) mm (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
@@ -348,8 +348,9 @@ assign dis_logic_cm_o = (cm_addr_x < 4 && cm_addr_y < 4) ? cm_shape[cm_addr_y[1:
 
 if(debug_p)
   always_ff @(posedge clk_i) begin
-    $display("From game_plate: current_state: %s",state_r.name());
-    $display("From game_plate: current_opcode_i: %s",opcode_i.name());
+    $display("==========Game Plate============");
+    $display("current_state: %s",state_r.name());
+    $display("current_opcode_i: %s",opcode_i.name());
   end
 endmodule
 

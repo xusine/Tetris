@@ -3,7 +3,7 @@ import tetris::*;
 module executor_commit #(
   parameter integer width_p = 16
   ,parameter integer height_p = 32
-  ,parameter debug_p = 1
+  ,parameter debug_p = 0
 )(
   input clk_i
   ,input reset_i
@@ -61,17 +61,9 @@ if(debug_p)
     $display("=========Executor Commit==============");
     $display("From commit: %s",state_r.name());
     $display("From commit: shape_r:");
-    for(integer i = 0; i < 4; ++i) begin
-      for(integer j = 0; j < 4; ++j)
-        $write("%b",shape_r[i][j]);
-      $display("");
-    end
+    displayMatrix(shape_r);
     $display("From commit: shape_on_board_i:");
-    for(integer i = 0; i < 4; ++i) begin
-      for(integer j = 0; j < 4; ++j)
-        $write("%b",shape_on_board_i[i][j]);
-      $display("");
-    end
+    displayMatrix(shape_on_board_i);
 
   end
 

@@ -63,6 +63,6 @@ end
 assign type_o = type_r;
 assign angle_o = angle_r;
 assign set_v_o = state_r == eWrite;
-assign done_o = state_r == eWaiting & cm_is_ready_i | ~rotate_avail_i;
+assign done_o = state_r == eWaiting & cm_is_ready_i | state_r == eIDLE & ~rotate_avail_i;
 
 endmodule

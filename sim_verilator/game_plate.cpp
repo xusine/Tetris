@@ -6,17 +6,17 @@
 
 void displayCurrentInfo(TestWrapper<Vgame_plate> &dut){
     puts("Board Info:");
-    for(int i = 0; i < 32; ++i){
+    for(int i = 0; i < 16; ++i){
         dut->dis_logic_y_i = i;
         for(int j = 0; j < 16; ++j){
             dut->dis_logic_x_i = j;
             dut->eval();
             if(dut->dis_logic_mm_o)
-                printf("1");
+                printf("1 ");
             else if(dut->dis_logic_cm_o)
-                printf("*");
+                printf("* ");
             else
-                printf("0");
+                printf("0 ");
         }
         puts("");
     }
@@ -44,9 +44,10 @@ int main(int argc, char **argv){
     while(true){ // Debug list
         char c = 0;
         puts("n for new, s for move down, a for move left, d for move right, x for rotate, c for commit and k for check.");
-        scanf("%c", &c);
+        char buffer[100];
+        fgets(buffer,100,stdin);
         fflush(stdin);
-        switch (c){
+        switch (buffer[0]){
             case 'n': {
                 wrapper->opcode_i = Vgame_plate_tetris::eNew;
                 break;
@@ -90,6 +91,8 @@ int main(int argc, char **argv){
         wrapper->opcode_v_i = 0;
         wrapper.tick(false);
         displayCurrentInfo(wrapper);
+        if(wrapper->lose_o)
+            puts("Lost!");
     }
 
     return 0;
