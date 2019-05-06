@@ -14,7 +14,6 @@ module executor_rotate #(
   // current state memory interface
   ,input tile_type_e type_i
   ,input [1:0] angle_i
-  ,input point_t pos_i
   ,input cm_is_ready_i
 
   ,output tile_type_e type_o
@@ -44,17 +43,14 @@ always_ff @(posedge clk_i) begin
   endcase
 end
 
-point_t base_pos_r;
 reg [1:0] angle_r;
 tile_type_e type_r;
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
-    base_pos_r <= '0;
     angle_r <= '0;
     type_r <= eNon;
   end
   else if(state_r == eIDLE && v_i) begin
-    base_pos_r <= pos_i;
     angle_r <= angle_i + 1;
     type_r <= type_i;
   end

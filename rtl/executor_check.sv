@@ -15,7 +15,7 @@ module executor_check #(
   ,output [width_p-1:0] mm_write_data_o
   ,output mm_write_v_o
 
-  ,output [$clog2(height_p)-1:0] combine_number_o
+  ,output [2:0] combine_number_o
 
 );
 
@@ -23,82 +23,48 @@ typedef enum bit [1:0] {eIDLE, eCheck, eMove} state_e;
 // FSM
 state_e state_r;
 // Memory address
-reg [$clog2(height_p)-1:0] mm_addr_r_r;
-reg [$clog2(height_p)-1:0] mm_addr_w_r;
-reg [$clog2(height_p)-1:0] combine_num_r;
+reg [2:0] index_addr_r;
+
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
     state_r <= eIDLE;
   end
-  else unique case(state_r)
-    eIDLE: state_r <= v_i ? eCheck : eIDLE;
-    eCheck: begin
-      if(mm_read_data_i == '1) begin
-        state_r <= eMove;
-      end
-      else if(mm_addr_r_r == '0) begin
-        state_r <= eIDLE;
-      end
-    end
-    eMove: begin
-      if(mm_addr_w_r == '0) state_r <= eCheck;
-      else  state_r <= eMove;
-    end
-    default: begin
-
-    end
-  endcase
-end
-
-assign mm_read_addr_o = mm_addr_r_r;
-assign mm_write_addr_o = mm_addr_w_r;
-assign done_o = state_r == eCheck && mm_addr_r_r == 0 && mm_read_data_i != '1;
-assign combine_number_o = combine_num_r;
-
-// update memory address
-always_ff @(posedge clk_i) begin
-  if(reset_i) begin
-    mm_addr_r_r <= height_p-1;
-    mm_addr_w_r <= height_p-1;
-    combine_num_r <= '0;
+  else if(state_r == eIDLE && v_i) begin
+    state_r <= eCheck;
   end
-  else unique case(state_r) 
-    eIDLE: begin
-      mm_addr_r_r <= height_p-1;
-      mm_addr_w_r <= height_p-1;
-      combine_num_r <= '0;
-    end
-    eCheck: begin
-      mm_addr_r_r <= mm_addr_r_r - 1;
-      if(mm_read_data_i != '1) begin
-        mm_addr_w_r <= mm_addr_w_r - 1;
-      end
-      else begin
-        combine_num_r <= combine_num_r + 1;
-      end
-    end
-    eMove: begin
-      if(mm_addr_w_r == 0) begin // ?
-        mm_addr_w_r <= height_p-1;
-        mm_addr_r_r <= height_p-1;
-      end
-      else begin
-        mm_addr_r_r <= mm_addr_r_r - 1;
-        mm_addr_w_r <= mm_addr_w_r - 1;
-      end
-    end
-    default: begin
-
-    end
-  endcase
+  else if(state_r == eCheck) begin
+    if(mm_read_data_i == '1) state_r <= eMove;
+    else if(index_addr_r == 0) state_r <= eIDLE;
+  end
+  else if(state_r == eMove) begin
+    if(index_addr_r == 0) state_r <= eCheck;
+  end
 end
-assign mm_write_data_o = (mm_addr_w_r == height_p - 1) ? '0 : mm_read_data_i;
-assign mm_write_v_o = state_r == eMove;
-if(debug_p)
+assign combine_number_o = combine_number_r;
+reg [$clog2(height_p)-1:0] combine_number_r;
 always_ff @(posedge clk_i) begin
-  $display("==============Executor Check==============");
-  $display("From executor_check: state_r:%s",state_r.name());
-  $display("From executor_check: mm_addr_r:%b",mm_addr_r_r);
-  $display("From executor_check: mm_addr_w:%b",mm_addr_r_r);
+  if(reset_i) combine_number_r <= '0;
+  else if(state_r == eIDLE && v_i) combine_number_r <= '0;
+  else if(state_r == eCheck && mm_read_data_i == '1) combine_number_r <= combine_number_r + 1;
 end
+
+assign mm_read_addr_o = index_addr_r;
+assign mm_write_addr_o = index_addr_r + 1;
+always_ff @(posedge clk_i) begin
+  if(reset_i) index_addr_r <= height_p - 1;
+  else if(state_r == eIDLE) index_addr_r <= height_p - 1;
+  else if(state_r == eMove && index_addr_r == 0) index_addr_r <= height_p - 1;
+  else index_addr_r <= index_addr_r - 1;
+end
+assign mm_write_data_o = mm_read_data_i;
+assign mm_write_v_o = state_r == eMove;
+assign done_o = state_r == eCheck && index_addr_r == '0;
+
+if(debug_p)
+  always_ff @(posedge clk_i) begin
+    $display("==========Executor Check============");
+    $display("state:%s",state_r.name());
+    $display("index_addr_r:%b",index_addr_r);
+    $display("combine_number_r:%d",combine_number_r);
+  end
 endmodule

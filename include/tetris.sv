@@ -19,11 +19,21 @@ typedef struct packed{
 } shape_info_t /*verilator public*/;
 
 parameter scene_width_p = 16;
-parameter scene_height_p = 32;
+parameter scene_height_p = 16;
 
 typedef struct packed{
   logic [$clog2(scene_height_p):0] y_m;
   logic [$clog2(scene_width_p):0] x_m;
 } point_t /*verilator public*/;
+
+function void displayMatrix(
+  input shape_t shape_i
+);
+  for(integer i = 0; i < 4; ++i) begin
+      for(integer j = 0; j < 4; ++j)
+        $write("%b",shape_i[i][j]);
+      $display("");
+    end
+endfunction
 
 endpackage

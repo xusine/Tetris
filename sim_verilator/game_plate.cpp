@@ -32,6 +32,7 @@ int main(int argc, char **argv){
     wrapper->opcode_v_i = 0;
     wrapper->dis_logic_x_i = 0;
     wrapper->dis_logic_y_i = 0;
+    wrapper->yumi_i = 0;
     wrapper->eval();
 
     // reset
@@ -43,12 +44,12 @@ int main(int argc, char **argv){
 
     while(true){ // Debug list
         char c = 0;
-        puts("n for new, s for move down, a for move left, d for move right, x for rotate, c for commit and k for check.");
+        puts("q for new, s for move down, a for move left, d for move right, x for rotate, e for commit and k for check.");
         char buffer[100];
         fgets(buffer,100,stdin);
         fflush(stdin);
         switch (buffer[0]){
-            case 'n': {
+            case 'q': {
                 wrapper->opcode_i = Vgame_plate_tetris::eNew;
                 break;
             }
@@ -68,16 +69,13 @@ int main(int argc, char **argv){
                 wrapper->opcode_i = Vgame_plate_tetris::eRotate;
                 break;
             }
-            case 'c': {
+            case 'e': {
                 wrapper->opcode_i = Vgame_plate_tetris::eCommit;
                 break;
             }
             case 'k': {
                 wrapper->opcode_i = Vgame_plate_tetris::eCheck;
                 break;
-            }
-            case 'q': {
-                return 0;
             }
             default: {
                 wrapper->opcode_i = Vgame_plate_tetris::eNop;
@@ -87,12 +85,16 @@ int main(int argc, char **argv){
         wrapper.tick(false);
         while(!wrapper->done_o)
             wrapper.tick(false);
+        if(wrapper->line_elimination_v_o)
+            printf("Eliminate lines: %d\n",wrapper->line_elimination_o);
         wrapper.tick(false);
-        wrapper->opcode_v_i = 0;
+        wrapper->yumi_i = 1;
         wrapper.tick(false);
+        wrapper->yumi_i = 0;
         displayCurrentInfo(wrapper);
         if(wrapper->lose_o)
             puts("Lost!");
+        
     }
 
     return 0;

@@ -54,16 +54,13 @@ assign new_pos_v_o = state_r == eWrite;
 // new position register
 reg [$clog2(width_p):0] mm_base_addr_x_r;
 reg [$clog2(height_p):0] mm_base_addr_y_r;
-reg [2:0] move_avail_r;
 // latch input
 always_ff @(posedge clk_i) begin
   if(reset_i) begin
     mm_base_addr_x_r <= '0;
     mm_base_addr_y_r <= '0;
-    move_avail_r <= '1;
   end
   else if(state_r == eIDLE && v_i) begin
-    move_avail_r <= move_avail_i;
     unique case(direction_i)
       eNonDir:begin 
         

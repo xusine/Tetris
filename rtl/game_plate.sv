@@ -7,8 +7,10 @@ module game_plate #(
   input clk_i
   ,input reset_i
   
+  // FIFO interface
   ,input opcode_e opcode_i
   ,input opcode_v_i
+  ,output ready_o
 
   // ports for display unit
   ,input [$clog2(width_p)-1:0] dis_logic_x_i
@@ -18,13 +20,15 @@ module game_plate #(
   ,output [3:0][3:0] dis_logic_next_block_o
 
   // game information
-  ,output [$clog2(height_p)-1:0] line_elimination_o
+  ,output [2:0] line_elimination_o
   ,output line_elimination_v_o
   ,output lose_o
-  ,output done_o
+  ,output done_o // for Verilator simulation
+
+  ,input yumi_i
 );
 
-typedef enum bit [3:0] {eFetch, eDecode,eOpNew, eOpNewNext, eOpMove, eOpRotate, eOpCommit, eOpCheck, eOpCheckLost ,eOpLost, eOpNop} state_e;
+typedef enum bit [3:0] {eFetch, eDecode,eOpNew, eOpNewNext, eOpMove, eOpRotate, eOpCommit, eOpCheck, eOpCheckLost ,eOpLost, eOpNop, eOpDone} state_e;
 
 state_e state_r, state_n; // state
 opcode_e opcode_r;
@@ -68,22 +72,26 @@ always_ff @(posedge clk_i) begin
       endcase
     end
     eOpNop: begin
-      state_r <= eFetch;
+      state_r <= eOpDone;
     end
     eOpNew: begin
       if(new_is_done) state_r <= eOpNewNext;
     end
     eOpMove: begin
-      if(move_is_done) state_r <= move_direction == eDown ? eOpCheckLost : eFetch;
+      if(move_is_done) state_r <= move_direction == eDown ? eOpCheckLost : eOpDone;
     end
     eOpCheckLost: begin
       state_r <= eOpLost;
     end
     eOpLost: begin
-      if(!lose_r) state_r <= eFetch;
+      if(!lose_r) state_r <= eOpDone;
+    end
+    eOpDone: begin
+      if(yumi_i) state_r <= eFetch;
+      else state_r <= eOpDone;
     end
     default: begin
-      if(executor_is_done) state_r <= eFetch;
+      if(executor_is_done) state_r <= eOpDone;
     end
   endcase
 end
@@ -110,7 +118,8 @@ always_comb unique case(state_r)
   default: executor_is_done = '0;
 endcase
 
-assign done_o = executor_is_done;
+assign done_o = state_r == eOpDone;
+assign ready_o = state_r == eFetch;
 
 logic [width_p-1:0] scanner_output_data_o;
 assign dis_logic_mm_o = scanner_output_data_o[dis_logic_x_i];
@@ -287,7 +296,6 @@ executor_rotate #(
 
   ,.type_i(cm_type)
   ,.angle_i(cm_angle)
-  ,.pos_i(cm_pos)
   ,.cm_is_ready_i(cm_is_ready)
 
   ,.type_o(rotate_set_tile_type)

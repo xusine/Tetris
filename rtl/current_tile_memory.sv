@@ -1,6 +1,6 @@
 import tetris::*;
 module current_tile_memory #(
-  parameter debug_p = 1
+  parameter debug_p = 0
 )(
   input clk_i
   ,input reset_i
@@ -180,7 +180,8 @@ always_ff @(posedge clk_i) begin
     next_shape_r <= '0;
   end
   else if (state_r == eIDLE & fetch_next_i) begin
-    random_addr_r <= random_addr_n[4:2] == 0 ? {~random_addr_n[4:2], random_addr_n[1:0]} : random_addr_n;
+    //random_addr_r <= random_addr_n[4:2] == 0 ? {~random_addr_n[4:2], random_addr_n[1:0]} : random_addr_n;
+
   end
   else if(state_r == eSetNext) begin
     next_shape_r <= rom_read_data.shape_m;
