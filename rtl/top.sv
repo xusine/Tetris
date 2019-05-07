@@ -46,6 +46,7 @@ wire [4:0] av_keys /* synthesis syn_noclockbuf=1 */;
 
 anti_vibrator #(
   .width_p(5)
+  ,.pos_valid_p(0)
 )ant_vir(
   .clk_i(clk_64hz)
   ,.keys_i({reset_i, left_i, right_i, rotate_i, start_i})
@@ -69,16 +70,16 @@ wire [$clog2(logic_height_p)-1:0] logic_y = vga_y >> 4;
 wire logic_mm_data;
 wire logic_cm_data;
 
-logic [bit_depth_p-1:0] vga_r = {bit_depth_p{logic_mm_data}};
-logic [bit_depth_p-1:0] vga_g = {bit_depth_p{logic_cm_data}};
-logic [bit_depth_p-1:0] vga_b = '0;
+logic [bit_depth_p-1:0] vga_r = {bit_depth_p{vga_xy_v & logic_mm_data}};
+logic [bit_depth_p-1:0] vga_g = {bit_depth_p{vga_xy_v & logic_cm_data}};
+logic [bit_depth_p-1:0] vga_b = {bit_depth_p{vga_xy_v}};
 
 game_top_logic #(
   .width_p(logic_width_p)
   ,.height_p(logic_height_p)
 )top_logic(
   .clk_i(frequency_divider_r[2])
-  ,.reset_i(reset_top)
+  ,.reset_i(reset_i)
 
   ,.left_i(actual_keys[3])
   ,.right_i(actual_keys[2])
@@ -108,7 +109,7 @@ vga_controller #(
   .bit_depth_p(bit_depth_p)
 ) vga_driver (
   .clk_i(clk_vga)
-  ,.reset_i(reset_top)
+  ,.reset_i(reset_i)
 
   ,.r_i(vga_r)
   ,.g_i(vga_g)

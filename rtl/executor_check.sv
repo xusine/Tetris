@@ -1,7 +1,7 @@
 module executor_check #(
   parameter integer width_p = 16
   ,parameter integer height_p = 32
-  ,parameter debug_p = 1
+  ,parameter debug_p = 0
 )(
   input clk_i
   ,input reset_i
@@ -23,7 +23,7 @@ typedef enum bit [1:0] {eIDLE, eCheck, eMove} state_e;
 // FSM
 state_e state_r;
 // Memory address
-reg [2:0] index_addr_r;
+reg [$clog2(height_p)-1:0] index_addr_r;
 
 always_ff @(posedge clk_i) begin
   if(reset_i) begin

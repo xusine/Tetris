@@ -25,6 +25,8 @@ module game_plate #(
   ,output lose_o
   ,output done_o // for Verilator simulation
 
+  ,output block_cannot_move_down_o
+
   ,input yumi_i
 );
 
@@ -208,6 +210,7 @@ wire cm_is_ready;
 assign block_memory_read_2_addr = cm_pos;
 
 current_tile_memory #(
+  .debug_p(1)
 )cm(
   .clk_i(clk_i)
   ,.reset_i(reset_i)
@@ -353,7 +356,7 @@ end
 wire [$clog2(width_p):0] cm_addr_x = dis_logic_x_i - cm_pos.x_m;
 wire [$clog2(height_p):0] cm_addr_y = dis_logic_y_i - cm_pos.y_m;
 assign dis_logic_cm_o = (cm_addr_x < 4 && cm_addr_y < 4) ? cm_shape[cm_addr_y[1:0]][cm_addr_x[1:0]] : '0;
-
+assign block_cannot_move_down_o = ~cm_move_avail[2];
 if(debug_p)
   always_ff @(posedge clk_i) begin
     $display("==========Game Plate============");

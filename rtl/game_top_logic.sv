@@ -2,6 +2,7 @@ module game_top_logic #(
   parameter integer width_p = scene_width_p
   ,parameter integer height_p = scene_height_p
   ,parameter debug_p = 1
+  ,parameter verilator_sim_p = 0
 )(
   input clk_i // = 1MHz
   ,input reset_i
@@ -29,24 +30,35 @@ module game_top_logic #(
   ,output clk_64hz_o
   ,output clk_128hz_o
 
+  // debug ports for synchronization
+  ,output debug_turn_finished_o
+
 );
 
-typedef enum logic[3:0] {eStart, eIdle, eUserInteract,eSystemNew,  eSystemDown, eSystemCommit, eSystemCheck, eAddScore, eLost} state_e;
-typedef enum logic[1:0] {eUserNop, eUserLeft, eUserRight, eUserRotate} user_op_e;
+typedef enum logic[3:0] {eStart, eIdle, eUserInteract, eSystemNew,  eSystemDown, eSystemCommit, eSystemCheck, eAddScore, eLost} state_e /*verilator public*/;
+typedef enum logic[1:0] {eUserNop, eUserLeft, eUserRight, eUserRotate} user_op_e /*verilator public*/;
 
 reg [19:0] frequency_divider_r;
 always_ff @(posedge clk_i) begin
   if(reset_i) frequency_divider_r <= '0;
   else frequency_divider_r <= frequency_divider_r + 1;
 end
-wire clk_4hz = frequency_divider_r[17:0] == '1;
+wire clk_4hz;
+if(!verilator_sim_p)
+  assign clk_4hz = frequency_divider_r[17:0] == '1; // [17:0], test is [1:0]
+else
+  assign clk_4hz = frequency_divider_r[1:0] == '1; // [17:0], test is [1:0]
 reg clk_4hz_r;
 always_ff @(posedge clk_i) begin
   if(reset_i) clk_4hz_r <= '0;
   else clk_4hz_r <= clk_4hz;
 end
 wire pos_4hz = clk_4hz & ~clk_4hz_r;
-wire clk_1hz = frequency_divider_r == '1;
+wire clk_1hz;
+if(!verilator_sim_p)
+  assign clk_1hz = frequency_divider_r[19:0] == '1; // [19:0], test is [3:0]
+else
+  assign clk_1hz = frequency_divider_r[3:0] == '1;
 reg clk_1hz_r;
 always_ff @(posedge clk_i) begin
   if(reset_i) clk_1hz_r <= '0;
@@ -61,7 +73,9 @@ assign clk_64hz_o = frequency_divider_r[13];
 
 wire op_is_done;
 wire add_score_done;
-state_e state_r, state_n;
+wire touch_bottom;
+state_e state_r /*verilator public*/;
+state_e state_n /*verilator public*/;
 user_op_e user_op_r;
 
 always_ff @(posedge clk_i) begin
@@ -90,7 +104,7 @@ always_comb unique case(state_r)
   end
   eSystemDown: begin
     if (lose_o & pos_4hz) state_n = eLost;
-    else if(op_is_done) state_n = eSystemCommit;
+    else if(op_is_done) state_n = touch_bottom ? eSystemCommit : eIdle;
     else state_n = eSystemDown;
   end
   eSystemCommit: begin
@@ -102,7 +116,7 @@ always_comb unique case(state_r)
     else state_n = eSystemCheck;
   end
   eAddScore: begin
-    if(add_score_done) state_n = eIdle;
+    if(add_score_done) state_n = eSystemNew;
     else state_n = eAddScore;
   end
   eLost: begin
@@ -141,7 +155,7 @@ wire [2:0] line_eliminate_n;
 game_plate #(
   .width_p(width_p)
   ,.height_p(height_p)
-  ,.debug_p(debug_p)
+  ,.debug_p(1)
 ) plate (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
@@ -160,6 +174,7 @@ game_plate #(
   ,.line_elimination_v_o()
   ,.lose_o(lose_o)
   ,.done_o(op_is_done)
+  ,.block_cannot_move_down_o(touch_bottom)
 
   ,.yumi_i(plate_yumi)
 );
@@ -197,5 +212,13 @@ always_ff @(posedge clk_i) begin
 end
 assign add_score_done = score_update_cnt_r == '1;
 assign score_o = score_r;
+assign debug_turn_finished_o = state_r == eSystemDown & state_n == eIdle;
+
+if(debug_p) begin
+  always_ff @(posedge clk_i) begin
+    $display("========== Top Logic ==========");
+    $display("Current State:%s",state_r.name());
+  end
+end
 
 endmodule

@@ -24,6 +24,10 @@ verilator_test_game_top_logic:
 	-CFLAGS "-g" \
 	--exe sim_verilator/game_logic.cpp
 
+	make -C obj_dir -f Vgame_top_logic.mk
+
+	./obj_dir/Vgame_top_logic > rep.txt
+
 
 verilator_test_game_plate:
 	make clean

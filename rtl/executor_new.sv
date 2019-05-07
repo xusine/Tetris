@@ -3,6 +3,7 @@ import tetris::*;
 module executor_new #(
   parameter integer height_p = 32 //[3,22]
   ,parameter integer width_p = 16 //[0,9]
+  ,parameter integer debug_p = 1
 )(
   input clk_i
   ,input reset_i
@@ -89,6 +90,13 @@ assign pos_o = point_r;
 assign tile_type_o = type_r;
 assign tile_type_angle_o = angle_r;
 assign v_o = state_r == eUpdate;
+
+if(debug_p)
+  always_ff @(posedge clk_i) begin
+    $display("=======Executor New==========");
+    $display("tile_type_i:%d",tile_type_i);
+    $display("type_r:%d",type_r);
+  end
 
 endmodule
 
