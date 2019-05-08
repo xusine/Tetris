@@ -46,9 +46,9 @@ always_ff @(posedge clk_i) begin
     b_r <= '0;
   end
   else begin
-    r_r <= r_i;
-    g_r <= g_i;
-    b_r <= b_i;
+    r_r <= xy_v_o ? r_i : '0;
+    g_r <= xy_v_o ? g_i : '0;
+    b_r <= xy_v_o ? b_i : '0;
   end
 end
 

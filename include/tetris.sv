@@ -19,7 +19,7 @@ typedef struct packed{
 } shape_info_t /*verilator public*/;
 
 parameter scene_width_p = 16;
-parameter scene_height_p = 16;
+parameter scene_height_p = 32;
 
 typedef struct packed{
   logic [$clog2(scene_height_p):0] y_m;
