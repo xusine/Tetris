@@ -55,6 +55,8 @@ wire [3:0][3:0] score;
 game_top_logic #(
   .width_p(logic_width_p)
   ,.height_p(logic_height_p)
+  ,.verilator_sim_p(0)
+  ,.debug_p(0)
 )top_logic(
   .clk_i(frequency_divider_r[2])
   ,.reset_i(!start_i)

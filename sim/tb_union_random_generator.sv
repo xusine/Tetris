@@ -5,13 +5,13 @@ module tb_union_random_generator;
   logic reset_li;
   logic [3:0][7:0] seed_li;
   logic v_li;
-  logic [7:0] random_lo;
+  logic [15:0] random_lo;
   logic v_lo;
 
   union_random_generator #(
-    .width_p(8)
-    ,.lfsr_num(2)
-    ,.mask_p({3,4})
+    .width_p(16)
+    ,.lfsr_num(3)
+    ,.mask_p({17,39,13})
   )ur(
     clk_li
     ,reset_li
@@ -50,7 +50,7 @@ module tb_union_random_generator;
     else begin
       $display("%d, %b",i,random_lo);
       i++;
-      if(i == 10) $finish;
+      if(i == 3000) $finish;
     end
   end
 endmodule

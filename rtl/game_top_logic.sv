@@ -2,7 +2,7 @@ module game_top_logic #(
   parameter integer width_p = scene_width_p
   ,parameter integer height_p = scene_height_p
   ,parameter debug_p = 1
-  ,parameter verilator_sim_p = 0
+  ,parameter verilator_sim_p = 1
 )(
   input clk_i // = 1MHz
   ,input reset_i
@@ -154,7 +154,7 @@ wire [2:0] line_eliminate_n;
 game_plate #(
   .width_p(width_p)
   ,.height_p(height_p)
-  ,.debug_p(1)
+  ,.debug_p(verilator_sim_p)
 ) plate (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
@@ -214,7 +214,7 @@ assign score_o = score_r;
 assign debug_turn_finished_o = state_r == eSystemDown & state_n == eIdle;
 assign state_o = state_r;
 
-if(debug_p) begin
+if(debug_p | verilator_sim_p) begin
   always_ff @(posedge clk_i) begin
     $display("========== Top Logic ==========");
     $display("Current State:%s",state_r.name());

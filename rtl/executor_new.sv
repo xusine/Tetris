@@ -1,8 +1,8 @@
 import tetris::*;
 
 module executor_new #(
-  parameter integer height_p = 32 //[3,22]
-  ,parameter integer width_p = 16 //[0,9]
+  parameter integer height_p = 32
+  ,parameter integer width_p = 16
   ,parameter integer debug_p = 1
 )(
   input clk_i

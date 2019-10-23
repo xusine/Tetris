@@ -40,8 +40,8 @@ always_ff @(posedge clk_i) begin
     if(index_addr_r == 0) state_r <= eCheck;
   end
 end
+reg [2:0] combine_number_r;
 assign combine_number_o = combine_number_r;
-reg [$clog2(height_p)-1:0] combine_number_r;
 always_ff @(posedge clk_i) begin
   if(reset_i) combine_number_r <= '0;
   else if(state_r == eIDLE && v_i) combine_number_r <= '0;

@@ -91,6 +91,7 @@ int main(int argc, char **argv){
         wrapper->yumi_i = 1;
         wrapper.tick(false);
         wrapper->yumi_i = 0;
+        dumpBits(&(wrapper->dis_logic_next_block_o));
         displayCurrentInfo(wrapper);
         if(wrapper->lose_o)
             puts("Lost!");

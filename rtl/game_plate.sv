@@ -148,7 +148,7 @@ shape_t block_memory_read_2_data;
 matrix_memory #(
   .width_p(width_p)
   ,.height_p(height_p)
-  ,.debug_p(0)
+  ,.debug_p(debug_p)
 ) mm (
   .clk_i(clk_i)
   ,.reset_i(reset_i)
@@ -210,7 +210,7 @@ wire cm_is_ready;
 assign block_memory_read_2_addr = cm_pos;
 
 current_tile_memory #(
-  .debug_p(1)
+  .debug_p(debug_p)
 )cm(
   .clk_i(clk_i)
   ,.reset_i(reset_i)

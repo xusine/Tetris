@@ -54,33 +54,27 @@ verilator_test_game_plate:
 	./obj_dir/Vgame_plate
 
 
-test_game_plate:
-	make clean
-	$(VCS) include/tetris.sv \
-	./rom/memory_pattern.sv \
-	./rtl/union_random_generator.sv \
-	./rtl/random_generator.sv \
-	./rtl/executor_commit.sv \
-	./rtl/executor_rotate.sv \
-	./rtl/executor_move.sv \
-	./rtl/executor_new.sv \
-	./rtl/executor_check.sv \
-	./rtl/matrix_memory.sv \
-	./rtl/current_tile_memory.sv \
-	./rtl/game_plate.sv
 
-
-test_layout_remapper:
-	make clean
-	$(VCS) ./rtl/layout_remapper.sv
-
-test_vga_logic:
+test_layout_map:
 	make clean
 	$(VCS) $(TEST_LIB)/*.v \
+	./include/*.sv \
 	./rtl/vga_controller.sv \
-	./sim/tb_vga_controller.sv
+	./rom/memory_character.sv \
+	./rtl/layout_map.sv \
+	./sim/tb_layout_map.sv
 
-	./simv
+	./simv > layout_rep.txt
+
+
+test_union_random_generator:
+	make clean
+	$(VCS) $(TEST_LIB)/*.v \
+	./rtl/random_generator.sv \
+	./rtl/union_random_generator.sv \
+	./sim/tb_union_random_generator.sv
+
+	./simv > union_random_generator_rep.txt
 
 clean:
 	rm -rf ./rtl/csrc

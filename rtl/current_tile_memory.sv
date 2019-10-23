@@ -228,6 +228,8 @@ always_ff @(posedge clk_i) begin
   displayMatrix(rom_read_data.shape_m);
   $display("Board output:");
   displayMatrix(mm_data_i);
+  $display("Next:");
+  displayMatrix(next_shape_r);
   end
 
 endmodule
